@@ -6,7 +6,7 @@ function signToken(user: IJWTPayload): string {
         throw new Error("JWT_SECRET environment variable not defined");
     }
     const privateKey = process.env.JWT_SECRET;
-    const TOKEN_EXPIRATION = 60 * 20;
+    const TOKEN_EXPIRATION = 60 * 480;
     const signOptions: SignOptions = {
         expiresIn: TOKEN_EXPIRATION,
     };
