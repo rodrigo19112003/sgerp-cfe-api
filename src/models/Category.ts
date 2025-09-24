@@ -27,11 +27,9 @@ export default class Category extends Model<
     declare id: CreationOptional<number>;
     declare name: string;
 
-    // Relaciones
     declare comments?: NonAttribute<Comment[]>;
     declare evidences?: NonAttribute<Evidence[]>;
 
-    // Mixins de Sequelize para relaciones
     declare getComments: HasManyGetAssociationsMixin<Comment>;
     declare addComment: HasManyAddAssociationMixin<Comment, number>;
     declare addComments: HasManyAddAssociationsMixin<Comment, number>;

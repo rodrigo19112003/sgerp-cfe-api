@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import sessionRouter from "../routes/sessions_router";
 import handleApiErrorMiddleware from "../middlewares/error_handler";
 
 export default function createApp() {
@@ -13,6 +14,8 @@ export default function createApp() {
             optionsSuccessStatus: 200,
         })
     );
+
+    app.use("api/sessions", sessionRouter);
 
     app.use(express.json());
 

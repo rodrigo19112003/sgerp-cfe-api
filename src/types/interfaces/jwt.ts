@@ -3,7 +3,7 @@ import UserRoles from "../enums/user_roles";
 
 interface IJWTPayload extends JwtPayload {
     id: number;
-    userRole: UserRoles;
+    userRoles: UserRoles[];
 }
 
 declare module "express-serve-static-core" {
