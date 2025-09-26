@@ -13,14 +13,9 @@ async function getUserByEmployeeNumber(employeeNumber: string) {
             where: { employeeNumber },
             include: [
                 {
-                    model: db.UserRole,
+                    model: db.Role,
                     as: "roles",
-                    include: [
-                        {
-                            model: db.Role,
-                            as: "role",
-                        },
-                    ],
+                    through: { attributes: [] },
                 },
             ],
         });
@@ -30,7 +25,7 @@ async function getUserByEmployeeNumber(employeeNumber: string) {
         }
 
         const userRoles: UserRoles[] = user.roles!.map(
-            (ur: any) => ur.role.name as UserRoles
+            (role: any) => role.name as UserRoles
         );
 
         userInformation = {

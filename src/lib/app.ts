@@ -15,9 +15,9 @@ export default function createApp() {
         })
     );
 
-    app.use("api/sessions", sessionRouter);
-
     app.use(express.json());
+
+    app.use("/api/sessions", sessionRouter);
 
     app.use(handleApiErrorMiddleware);
 
