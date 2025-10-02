@@ -3,4 +3,8 @@ interface ILoginBody {
     password?: string;
 }
 
-export { ILoginBody };
+interface ISendingCodeToChangePasswordBody {
+    email?: string;
+}
+
+export { ILoginBody, ISendingCodeToChangePasswordBody };

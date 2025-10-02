@@ -5,7 +5,9 @@ import BusinessLogicException from "../exceptions/business/BusinessLogicExceptio
 import ErrorMessages from "../types/enums/error_messages";
 import UserRoles from "../types/enums/user_roles";
 
-async function getUserByEmployeeNumber(employeeNumber: string) {
+async function getUserByEmployeeNumber(
+    employeeNumber: string
+): Promise<IUserWithRoles> {
     let userInformation: IUserWithRoles;
 
     try {
@@ -43,4 +45,56 @@ async function getUserByEmployeeNumber(employeeNumber: string) {
     return userInformation;
 }
 
-export { getUserByEmployeeNumber };
+async function validateEmailExists(email: string): Promise<void> {
+    try {
+        const user = await db.User.findOne({
+            where: { email },
+        });
+
+        if (user === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+            );
+        }
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function createValidationCode(
+    validationCodeHash: string,
+    email: string
+): Promise<void> {
+    try {
+        const user = await db.User.findOne({
+            where: {
+                email,
+            },
+        });
+
+        if (user === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+            );
+        }
+
+        const userId = user.id;
+
+        await db.EmailValidationCode.create({
+            code: validationCodeHash,
+            userId,
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+export { getUserByEmployeeNumber, validateEmailExists, createValidationCode };

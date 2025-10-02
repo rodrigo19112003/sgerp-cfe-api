@@ -7,6 +7,7 @@ import UserRole from "../../models/UserRole";
 import Evidence from "../../models/Evidence";
 import Comment from "../../models/Comment";
 import DeliveryReceptionReceived from "../../models/DeliveryReceptionReceived";
+import EmailValidationCode from "../../models/EmailValidationCode";
 
 interface IDBModel {
     associate: (db: IDB) => void;
@@ -25,6 +26,7 @@ interface IDB {
     Evidence: typeof Evidence & IDBModel;
     Comment: typeof Comment & IDBModel;
     DeliveryReceptionReceived: typeof DeliveryReceptionReceived & IDBModel;
+    EmailValidationCode: typeof EmailValidationCode & IDBModel;
     sequelize: Sequelize;
 }
 
