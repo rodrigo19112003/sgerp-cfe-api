@@ -84,6 +84,20 @@ async function createValidationCode(
 
         const userId = user.id;
 
+        const codeAlreadyExists = await db.EmailValidationCode.findOne({
+            where: {
+                userId,
+            },
+        });
+
+        if (codeAlreadyExists !== null) {
+            await db.EmailValidationCode.destroy({
+                where: {
+                    id: codeAlreadyExists.id,
+                },
+            });
+        }
+
         await db.EmailValidationCode.create({
             code: validationCodeHash,
             userId,
@@ -97,4 +111,51 @@ async function createValidationCode(
     }
 }
 
-export { getUserByEmployeeNumber, validateEmailExists, createValidationCode };
+async function getValidationCodeByEmail(email: string): Promise<string> {
+    let validationCodeHash: string;
+
+    try {
+        const user = await db.User.findOne({
+            where: {
+                email,
+            },
+        });
+
+        if (user === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+            );
+        }
+
+        const userId = user.id;
+
+        const code = await db.EmailValidationCode.findOne({
+            where: {
+                userId,
+            },
+        });
+
+        if (code === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.VALIDATION_CODE_DOES_NOT_EXISTS
+            );
+        }
+
+        validationCodeHash = code.code;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return validationCodeHash;
+}
+
+export {
+    getUserByEmployeeNumber,
+    validateEmailExists,
+    createValidationCode,
+    getValidationCodeByEmail,
+};

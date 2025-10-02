@@ -7,4 +7,9 @@ interface ISendingCodeToChangePasswordBody {
     email?: string;
 }
 
-export { ILoginBody, ISendingCodeToChangePasswordBody };
+interface IValidationCodeBody {
+    email?: string;
+    code?: string;
+}
+
+export { ILoginBody, ISendingCodeToChangePasswordBody, IValidationCodeBody };

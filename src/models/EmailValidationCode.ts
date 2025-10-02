@@ -18,7 +18,7 @@ export default class EmailValidationCode extends Model<
     InferCreationAttributes<EmailValidationCode>
 > {
     declare id: CreationOptional<number>;
-    declare code: string | null;
+    declare code: string;
 
     declare userId: ForeignKey<User["id"]>;
 
