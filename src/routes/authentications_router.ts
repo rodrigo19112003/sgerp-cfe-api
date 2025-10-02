@@ -4,10 +4,12 @@ import { checkSchema } from "express-validator";
 import {
     sendEmailToChangePasswordSchema,
     sendCodeToChangePasswordSchema,
+    changePasswordSchema,
 } from "../validation_schemas/authentication";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import {
     sendCodeByEmailController,
+    updatePasswordController,
     verifyValidationCodeController,
 } from "../controllers/authentications_controller";
 
@@ -27,6 +29,14 @@ router.post(
     checkSchema(sendCodeToChangePasswordSchema),
     validateRequestSchemaMiddleware,
     verifyValidationCodeController
+);
+
+router.post(
+    "/update-password",
+    limitPublicEndpointUse(),
+    checkSchema(changePasswordSchema),
+    validateRequestSchemaMiddleware,
+    updatePasswordController
 );
 
 export default router;

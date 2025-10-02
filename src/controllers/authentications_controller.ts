@@ -1,7 +1,8 @@
 import { HttpStatusCodes } from "../types/enums/http";
-import { NextFunction, Request, Response } from "express";
+import e, { NextFunction, Request, Response } from "express";
 import { hashString, compareHashedString } from "../lib/security_service";
 import {
+    IChangingPasswordBody,
     ISendingCodeToChangePasswordBody,
     IValidationCodeBody,
 } from "../types/interfaces/request_bodies";
@@ -11,6 +12,7 @@ import {
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,
+    updatePasswordByEmail,
 } from "../services/users_service";
 import { generateValidationCode, sendValidationCodeEmail } from "../lib/utils";
 
@@ -65,4 +67,39 @@ async function verifyValidationCodeController(
     }
 }
 
-export { sendCodeByEmailController, verifyValidationCodeController };
+async function updatePasswordController(
+    req: Request<{}, {}, IChangingPasswordBody, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { email, code, password } = req.body;
+
+        const validationCodeHash = await getValidationCodeByEmail(email!);
+
+        const validateCode = await compareHashedString(
+            code!,
+            validationCodeHash
+        );
+
+        if (!validateCode) {
+            throw new BusinessLogicException(
+                ErrorMessages.INVALID_VALIDATION_CODE
+            );
+        }
+
+        const passwordHash = hashString(password!);
+
+        await updatePasswordByEmail(email!, passwordHash);
+
+        res.status(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export {
+    sendCodeByEmailController,
+    verifyValidationCodeController,
+    updatePasswordController,
+};

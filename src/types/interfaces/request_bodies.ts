@@ -12,4 +12,15 @@ interface IValidationCodeBody {
     code?: string;
 }
 
-export { ILoginBody, ISendingCodeToChangePasswordBody, IValidationCodeBody };
+interface IChangingPasswordBody {
+    email?: string;
+    code?: string;
+    password?: string;
+}
+
+export {
+    ILoginBody,
+    ISendingCodeToChangePasswordBody,
+    IValidationCodeBody,
+    IChangingPasswordBody,
+};

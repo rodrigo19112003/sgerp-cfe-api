@@ -153,9 +153,34 @@ async function getValidationCodeByEmail(email: string): Promise<string> {
     return validationCodeHash;
 }
 
+async function updatePasswordByEmail(
+    email: string,
+    passwordHash: string
+): Promise<void> {
+    try {
+        await validateEmailExists(email);
+
+        await db.User.update(
+            { passwordHash },
+            {
+                where: {
+                    email,
+                },
+            }
+        );
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
 export {
     getUserByEmployeeNumber,
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,
+    updatePasswordByEmail,
 };
