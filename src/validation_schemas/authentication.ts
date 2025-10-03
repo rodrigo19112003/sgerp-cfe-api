@@ -11,7 +11,7 @@ const sendEmailToChangePasswordSchema: Schema = {
             errorMessage: "Email is required",
         },
         matches: {
-            options: /^[a-zA-Z0-9._%+-]+@cfe\.mx$/,
+            options: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
             errorMessage:
                 "Email must be a valid CFE address (e.g. usuario@cfe.mx)",
         },
@@ -29,7 +29,7 @@ const sendCodeToChangePasswordSchema: Schema = {
             errorMessage: "Email is required",
         },
         matches: {
-            options: /^[a-zA-Z0-9._%+-]+@cfe\.mx$/,
+            options: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
             errorMessage:
                 "Email must be a valid CFE address (e.g. usuario@cfe.mx)",
         },
@@ -63,7 +63,7 @@ const changePasswordSchema: Schema = {
             errorMessage: "Email is required",
         },
         matches: {
-            options: /^[a-zA-Z0-9._%+-]+@cfe\.mx$/,
+            options: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
             errorMessage:
                 "Email must be a valid CFE address (e.g. usuario@cfe.mx)",
         },

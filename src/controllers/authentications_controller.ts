@@ -32,9 +32,11 @@ async function sendCodeByEmailController(
 
         await createValidationCode(validationCodeHash, email!);
 
-        await sendValidationCodeEmail(email!, validationCode);
+        res.sendStatus(HttpStatusCodes.CREATED);
 
-        res.status(HttpStatusCodes.CREATED);
+        setImmediate(() => {
+            sendValidationCodeEmail(email!, validationCode).catch(() => {});
+        });
     } catch (error) {
         next(error);
     }
@@ -61,7 +63,7 @@ async function verifyValidationCodeController(
             );
         }
 
-        res.status(HttpStatusCodes.OK);
+        res.sendStatus(HttpStatusCodes.OK);
     } catch (error) {
         next(error);
     }
@@ -92,7 +94,7 @@ async function updatePasswordController(
 
         await updatePasswordByEmail(email!, passwordHash);
 
-        res.status(HttpStatusCodes.CREATED);
+        res.sendStatus(HttpStatusCodes.CREATED);
     } catch (error) {
         next(error);
     }

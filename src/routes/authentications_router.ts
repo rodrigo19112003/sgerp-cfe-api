@@ -16,7 +16,7 @@ import {
 const router = Router();
 
 router.post(
-    "/forgot-password",
+    "/password-reset/request",
     limitPublicEndpointUse(),
     checkSchema(sendEmailToChangePasswordSchema),
     validateRequestSchemaMiddleware,
@@ -24,7 +24,7 @@ router.post(
 );
 
 router.post(
-    "/verify-code",
+    "/password-reset/verify",
     limitPublicEndpointUse(),
     checkSchema(sendCodeToChangePasswordSchema),
     validateRequestSchemaMiddleware,
@@ -32,7 +32,7 @@ router.post(
 );
 
 router.post(
-    "/update-password",
+    "/password-reset/change",
     limitPublicEndpointUse(),
     checkSchema(changePasswordSchema),
     validateRequestSchemaMiddleware,
