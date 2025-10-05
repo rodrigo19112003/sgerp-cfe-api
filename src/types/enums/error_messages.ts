@@ -3,6 +3,7 @@ enum ErrorMessages {
     EMAIL_DOES_NOT_EXISTS = "Email does not exist. Check that you have entered the email address correctly.",
     VALIDATION_CODE_DOES_NOT_EXISTS = "Validation code does not exist. Check that your email has a code associated with it.",
     INVALID_VALIDATION_CODE = "Invalid validation code. Check your validation code and try it again",
+    USER_NOT_FOUND = "The user with the specified id is not registered",
 }
 
 export default ErrorMessages;

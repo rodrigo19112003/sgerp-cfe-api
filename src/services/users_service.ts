@@ -45,6 +45,43 @@ async function getUserByEmployeeNumber(
     return userInformation;
 }
 
+async function getUserById(id: number): Promise<IUserWithRoles> {
+    let userInformation: IUserWithRoles;
+
+    try {
+        const user = await db.User.findByPk(id, {
+            include: [
+                {
+                    model: db.Role,
+                    as: "roles",
+                    through: { attributes: [] },
+                },
+            ],
+        });
+
+        if (user === null) {
+            throw new BusinessLogicException(ErrorMessages.USER_NOT_FOUND);
+        }
+
+        const userRoles: UserRoles[] = user.roles!.map(
+            (role: any) => role.name as UserRoles
+        );
+
+        userInformation = {
+            ...user.toJSON(),
+            roles: userRoles,
+        };
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return userInformation;
+}
+
 async function validateEmailExists(email: string): Promise<void> {
     try {
         const user = await db.User.findOne({
@@ -179,6 +216,7 @@ async function updatePasswordByEmail(
 
 export {
     getUserByEmployeeNumber,
+    getUserById,
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,

@@ -29,8 +29,8 @@ function checkTokenValidity(
     }
 
     if (isTokenAboutToExpire(payload)) {
-        const { id, userRole } = payload;
-        const newToken = signToken({ id, userRole });
+        const { id, userRoles } = payload;
+        const newToken = signToken({ id, userRoles });
 
         res.header("Set-Authorization", newToken);
     }
