@@ -4,6 +4,8 @@ import { IUserWithRoles } from "../types/interfaces/response_bodies";
 import BusinessLogicException from "../exceptions/business/BusinessLogicException";
 import ErrorMessages from "../types/enums/error_messages";
 import UserRoles from "../types/enums/user_roles";
+import User from "../models/User";
+import { InferAttributes } from "sequelize";
 
 async function getUserByEmployeeNumber(
     employeeNumber: string
@@ -80,6 +82,37 @@ async function getUserById(id: number): Promise<IUserWithRoles> {
     }
 
     return userInformation;
+}
+
+async function getAllUsers(pagination: {
+    offset: number;
+    limit: number;
+}): Promise<InferAttributes<User>[]> {
+    let usersList: InferAttributes<User>[] = [];
+
+    try {
+        const { offset, limit } = pagination;
+
+        const users = await db.User.findAll({
+            limit,
+            offset,
+            order: [["id", "DESC"]],
+        });
+
+        users.forEach((user) => {
+            usersList.push({
+                ...user.toJSON(),
+            });
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return usersList;
 }
 
 async function validateEmailExists(email: string): Promise<void> {
@@ -217,6 +250,7 @@ async function updatePasswordByEmail(
 export {
     getUserByEmployeeNumber,
     getUserById,
+    getAllUsers,
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,

@@ -41,9 +41,11 @@ function checkTokenValidity(
 
 function allowRoles(allowedRoles: UserRoles[]) {
     return function (req: Request, res: Response, next: NextFunction) {
-        const { userRole } = req.user;
+        const { userRoles } = req.user;
 
-        if (allowedRoles.includes(userRole)) {
+        const hasAccess = userRoles.some((role) => allowedRoles.includes(role));
+
+        if (hasAccess) {
             next();
         } else {
             res.status(HttpStatusCodes.FORBIDDEN).send();
