@@ -21,4 +21,15 @@ const getAllUsersValidationSchema: Schema = {
     },
 };
 
-export { getAllUsersValidationSchema };
+const deleteUserValidationSchema: Schema = {
+    userId: {
+        in: ["params"],
+        isInt: {
+            options: { min: 1 },
+            errorMessage: "Parameter idProduct must be a positive integer",
+        },
+        toInt: true,
+    },
+};
+
+export { getAllUsersValidationSchema, deleteUserValidationSchema };

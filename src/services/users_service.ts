@@ -6,6 +6,7 @@ import ErrorMessages from "../types/enums/error_messages";
 import UserRoles from "../types/enums/user_roles";
 import User from "../models/User";
 import { InferAttributes } from "sequelize";
+import { DeleteUserErrorCodes } from "../types/enums/error_codes";
 
 async function getUserByEmployeeNumber(
     employeeNumber: string
@@ -113,6 +114,31 @@ async function getAllUsers(pagination: {
     }
 
     return usersList;
+}
+
+async function deleteUserById(userId: number): Promise<void> {
+    try {
+        const user = await db.User.findByPk(userId);
+
+        if (user === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.USER_NOT_FOUND,
+                DeleteUserErrorCodes.USER_NOT_FOUND
+            );
+        }
+
+        await db.User.destroy({
+            where: {
+                id: userId,
+            },
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
 }
 
 async function validateEmailExists(email: string): Promise<void> {
@@ -251,6 +277,7 @@ export {
     getUserByEmployeeNumber,
     getUserById,
     getAllUsers,
+    deleteUserById,
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,

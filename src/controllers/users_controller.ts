@@ -2,8 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { IPaginationQuery } from "../types/interfaces/request_queries";
 import { InferAttributes } from "sequelize";
 import User from "../models/User";
-import { getAllUsers } from "../services/users_service";
+import { deleteUserById, getAllUsers } from "../services/users_service";
 import { HttpStatusCodes } from "../types/enums/http";
+import { IUserByIdParams } from "../types/interfaces/request_parameters";
 
 async function getAllUsersController(
     req: Request<{}, {}, {}, IPaginationQuery>,
@@ -21,4 +22,20 @@ async function getAllUsersController(
     }
 }
 
-export { getAllUsersController };
+async function deleteUserController(
+    req: Request<IUserByIdParams, {}, {}, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { userId } = req.params;
+
+        await deleteUserById(userId!);
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export { getAllUsersController, deleteUserController };
