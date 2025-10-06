@@ -19,6 +19,11 @@ const getAllUsersValidationSchema: Schema = {
         },
         toInt: true,
     },
+    query: {
+        in: ["query"],
+        trim: true,
+        optional: { options: { nullable: true } },
+    },
 };
 
 const deleteUserValidationSchema: Schema = {

@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import { IUserWithRoles } from "../types/interfaces/response_bodies";
@@ -88,13 +89,25 @@ async function getUserById(id: number): Promise<IUserWithRoles> {
 async function getAllUsers(pagination: {
     offset: number;
     limit: number;
+    query: string;
 }): Promise<InferAttributes<User>[]> {
     let usersList: InferAttributes<User>[] = [];
 
     try {
-        const { offset, limit } = pagination;
+        const { offset, limit, query } = pagination;
+
+        const whereCondition =
+            query && query.trim() !== ""
+                ? {
+                      [Op.or]: [
+                          { employeeNumber: { [Op.like]: `%${query}%` } },
+                          { fullName: { [Op.like]: `%${query}%` } },
+                      ],
+                  }
+                : undefined;
 
         const users = await db.User.findAll({
+            where: whereCondition,
             limit,
             offset,
             order: [["id", "DESC"]],

@@ -2,20 +2,25 @@ import { NextFunction, Request, Response } from "express";
 import { IPaginationQuery } from "../types/interfaces/request_queries";
 
 function injectDefaultGetUsersListQueryMiddleware(
-    req: Request,
+    req: Request<{}, {}, {}, IPaginationQuery>,
     res: Response,
     next: NextFunction
 ) {
     const MAX_USERS_BATCH_SIZE = 12;
-    const query = req.query as IPaginationQuery;
 
-    if (!query.limit || query.limit > MAX_USERS_BATCH_SIZE) {
-        query.limit = MAX_USERS_BATCH_SIZE;
-    }
+    const rawLimit = Number(req.query.limit);
+    const rawOffset = Number(req.query.offset);
 
-    if (!query.offset) {
-        query.offset = 0;
-    }
+    const validatedQuery: IPaginationQuery = {
+        limit:
+            isNaN(rawLimit) || rawLimit < 1 || rawLimit > MAX_USERS_BATCH_SIZE
+                ? MAX_USERS_BATCH_SIZE
+                : rawLimit,
+        offset: isNaN(rawOffset) || rawOffset < 0 ? 0 : rawOffset,
+        query: req.query.query?.toString().trim() || "",
+    };
+
+    (req as any).validatedQuery = validatedQuery;
 
     next();
 }

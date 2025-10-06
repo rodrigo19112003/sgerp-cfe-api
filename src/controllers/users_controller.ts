@@ -7,14 +7,14 @@ import { HttpStatusCodes } from "../types/enums/http";
 import { IUserByIdParams } from "../types/interfaces/request_parameters";
 
 async function getAllUsersController(
-    req: Request<{}, {}, {}, IPaginationQuery>,
+    req: Request,
     res: Response<InferAttributes<User>[]>,
     next: NextFunction
 ) {
     try {
-        const { limit, offset } = req.query;
+        const { limit, offset, query } = (req as any).validatedQuery;
 
-        const users = await getAllUsers({ limit: limit!, offset: offset! });
+        const users = await getAllUsers({ limit, offset, query });
 
         res.status(HttpStatusCodes.OK).json(users);
     } catch (error) {
