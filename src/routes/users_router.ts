@@ -5,6 +5,7 @@ import { checkSchema } from "express-validator";
 import {
     getAllUsersValidationSchema,
     deleteUserValidationSchema,
+    createUserValidationSchema,
 } from "../validation_schemas/user";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetUsersListQueryMiddleware } from "../middlewares/value_injectors";
@@ -32,6 +33,14 @@ router.delete(
     checkSchema(deleteUserValidationSchema),
     validateRequestSchemaMiddleware,
     deleteUserController
+);
+
+router.post(
+    "/",
+    checkTokenValidity,
+    allowRoles([UserRoles.ADMINISTRATOR]),
+    checkSchema(createUserValidationSchema),
+    validateRequestSchemaMiddleware
 );
 
 export default router;

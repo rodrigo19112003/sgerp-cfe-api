@@ -2,9 +2,16 @@ import { NextFunction, Request, Response } from "express";
 import { IPaginationQuery } from "../types/interfaces/request_queries";
 import { InferAttributes } from "sequelize";
 import User from "../models/User";
-import { deleteUserById, getAllUsers } from "../services/users_service";
+import {
+    createUser,
+    deleteUserById,
+    getAllUsers,
+} from "../services/users_service";
 import { HttpStatusCodes } from "../types/enums/http";
 import { IUserByIdParams } from "../types/interfaces/request_parameters";
+import { ICreateUserBody } from "../types/interfaces/request_bodies";
+import { generateSecurePassword, hashString } from "../lib/security_service";
+import { sendUserCredentialsEmail } from "../lib/utils";
 
 async function getAllUsersController(
     req: Request,
@@ -38,4 +45,37 @@ async function deleteUserController(
     }
 }
 
-export { getAllUsersController, deleteUserController };
+async function createUserController(
+    req: Request<{}, {}, ICreateUserBody, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { employeeNumber, fullName, email, userRoles } = req.body;
+        const password = generateSecurePassword();
+        const passwordHash = hashString(password);
+        await createUser({
+            employeeNumber: employeeNumber!,
+            fullName: fullName!,
+            email: email!,
+            passwordHash: passwordHash,
+            userRoles: userRoles!,
+        });
+
+        setImmediate(() => {
+            sendUserCredentialsEmail({
+                employeeNumber: employeeNumber!,
+                fullName: fullName!,
+                email: email!,
+                password: password,
+                userRoles: userRoles!,
+            }).catch(() => {});
+        });
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export { getAllUsersController, deleteUserController, createUserController };

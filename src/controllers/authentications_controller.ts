@@ -35,7 +35,10 @@ async function sendCodeByEmailController(
         res.sendStatus(HttpStatusCodes.CREATED);
 
         setImmediate(() => {
-            sendValidationCodeEmail(email!, validationCode).catch(() => {});
+            sendValidationCodeEmail({
+                email: email!,
+                code: validationCode,
+            }).catch(() => {});
         });
     } catch (error) {
         next(error);

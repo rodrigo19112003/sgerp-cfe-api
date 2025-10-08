@@ -1,3 +1,5 @@
+import UserRoles from "../enums/user_roles";
+
 interface ILoginBody {
     employeeNumber?: string;
     password?: string;
@@ -18,9 +20,17 @@ interface IChangingPasswordBody {
     password?: string;
 }
 
+interface ICreateUserBody {
+    employeeNumber?: string;
+    fullName?: string;
+    email?: string;
+    userRoles?: UserRoles[];
+}
+
 export {
     ILoginBody,
     ISendingCodeToChangePasswordBody,
     IValidationCodeBody,
     IChangingPasswordBody,
+    ICreateUserBody,
 };

@@ -80,7 +80,7 @@ const changePasswordSchema: Schema = {
         },
         matches: {
             options:
-                /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!$%&_¿?])[A-Za-z0-9!$%&_¿?]{8,16}$/,
+                /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!$%&_¿?*])[A-Za-z0-9!$%&_¿?]{8,16}$/,
             errorMessage:
                 "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character (!$%&_¿?)",
         },

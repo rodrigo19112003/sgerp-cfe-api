@@ -7,7 +7,11 @@ import ErrorMessages from "../types/enums/error_messages";
 import UserRoles from "../types/enums/user_roles";
 import User from "../models/User";
 import { InferAttributes } from "sequelize";
-import { DeleteUserErrorCodes } from "../types/enums/error_codes";
+import {
+    CreateUserErrorCodes,
+    DeleteUserErrorCodes,
+} from "../types/enums/error_codes";
+import Role from "../models/Role";
 
 async function getUserByEmployeeNumber(
     employeeNumber: string
@@ -154,6 +158,109 @@ async function deleteUserById(userId: number): Promise<void> {
     }
 }
 
+async function createUser(user: {
+    employeeNumber: string;
+    fullName: string;
+    email: string;
+    passwordHash: string;
+    userRoles: UserRoles[];
+}): Promise<void> {
+    try {
+        let workerId: number,
+            zoneManagerId: number,
+            witnessId: number,
+            administratorId: number;
+
+        const { employeeNumber, fullName, email, passwordHash, userRoles } =
+            user;
+
+        if (userRoles.includes(UserRoles.WORKER)) {
+            workerId = (await validateRoleExists(UserRoles.WORKER)).id;
+        }
+        if (userRoles.includes(UserRoles.ZONE_MANAGER)) {
+            zoneManagerId = (await validateRoleExists(UserRoles.ZONE_MANAGER))
+                .id;
+        }
+        if (userRoles.includes(UserRoles.ADMINISTRATOR)) {
+            administratorId = (
+                await validateRoleExists(UserRoles.ADMINISTRATOR)
+            ).id;
+        }
+        if (userRoles.includes(UserRoles.WITNESS)) {
+            witnessId = (await validateRoleExists(UserRoles.WITNESS)).id;
+
+            const witnessCounter = await db.UserRole.findAndCountAll({
+                where: { roleId: witnessId },
+            });
+
+            if (witnessCounter.count === 2) {
+                throw new BusinessLogicException(
+                    ErrorMessages.TWO_WITNESSES_ALREADY_EXIST,
+                    CreateUserErrorCodes.TWO_WITNESSES_ALREADY_EXIST
+                );
+            }
+        }
+
+        await db.sequelize.transaction(async (t) => {
+            const newUser = await db.User.create(
+                { employeeNumber, fullName, email, passwordHash },
+                { transaction: t }
+            );
+
+            const roleMap: { [key in UserRoles]?: number } = {
+                [UserRoles.WORKER]: workerId,
+                [UserRoles.ZONE_MANAGER]: zoneManagerId,
+                [UserRoles.ADMINISTRATOR]: administratorId,
+                [UserRoles.WITNESS]: witnessId,
+            };
+
+            for (const role of userRoles) {
+                await db.UserRole.create(
+                    {
+                        userId: newUser.id,
+                        roleId: roleMap[role]!,
+                    },
+                    { transaction: t }
+                );
+            }
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function validateRoleExists(roleName: string): Promise<Role> {
+    let role: Role;
+    try {
+        const roleInDatabse = await db.Role.findOne({
+            where: {
+                name: roleName,
+            },
+        });
+
+        if (roleInDatabse === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.ROLE_NOT_FOUND,
+                CreateUserErrorCodes.ROLE_NOT_FOUND
+            );
+        }
+
+        role = roleInDatabse;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return role;
+}
+
 async function validateEmailExists(email: string): Promise<void> {
     try {
         const user = await db.User.findOne({
@@ -291,6 +398,7 @@ export {
     getUserById,
     getAllUsers,
     deleteUserById,
+    createUser,
     validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,
