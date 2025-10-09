@@ -132,8 +132,22 @@ const createUserValidationSchema: Schema = {
     },
 };
 
+const getUserByEmployeeNumberValidationSchema: Schema = {
+    employeeNumber: {
+        in: ["params"],
+        isString: { errorMessage: "employeeNumber must be a string" },
+        isLength: {
+            options: { min: 5, max: 5 },
+            errorMessage: "employeeNumber must be exactly 5 characters long",
+        },
+        notEmpty: { errorMessage: "employeeNumber is required" },
+        trim: true,
+    },
+};
+
 export {
     getAllUsersValidationSchema,
     deleteUserValidationSchema,
     createUserValidationSchema,
+    getUserByEmployeeNumberValidationSchema,
 };

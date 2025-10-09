@@ -70,7 +70,7 @@ async function sendUserCredentialsEmail(userInformation: {
         <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
         <p>Hola <strong>${fullName}</strong>,</p>
         <p>Has sido registrado en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong> con los siguientes roles:</p>
-        <p style="text-align: left;">${rolesList}</p>
+        <p>${rolesList}</p>
         <p>Tus credenciales de acceso son:</p>
         <p>RTT/RPE: <strong>${employeeNumber}</strong><br>
         Contraseña: <strong>${password}</strong></p>

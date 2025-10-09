@@ -14,7 +14,8 @@ import {
 import Role from "../models/Role";
 
 async function getUserByEmployeeNumber(
-    employeeNumber: string
+    employeeNumber: string,
+    isLogin: boolean
 ): Promise<IUserWithRoles> {
     let userInformation: IUserWithRoles;
 
@@ -31,7 +32,13 @@ async function getUserByEmployeeNumber(
         });
 
         if (user === null) {
-            throw new BusinessLogicException(ErrorMessages.INVALID_CREDENTIALS);
+            if (isLogin) {
+                throw new BusinessLogicException(
+                    ErrorMessages.INVALID_CREDENTIALS
+                );
+            } else {
+                throw new BusinessLogicException(ErrorMessages.USER_NOT_FOUND);
+            }
         }
 
         const userRoles: UserRoles[] = user.roles!.map(

@@ -19,7 +19,7 @@ async function loginController(
     try {
         const { employeeNumber, password } = req.body;
 
-        const user = await getUserByEmployeeNumber(employeeNumber!);
+        const user = await getUserByEmployeeNumber(employeeNumber!, true);
 
         const validateCredentials = await compareHashedString(
             password!,

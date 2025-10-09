@@ -2,4 +2,8 @@ interface IUserByIdParams {
     userId?: number;
 }
 
-export { IUserByIdParams };
+interface IUserByEmployeeNumberParams {
+    employeeNumber?: string;
+}
+
+export { IUserByIdParams, IUserByEmployeeNumberParams };

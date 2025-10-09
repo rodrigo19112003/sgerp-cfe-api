@@ -1,17 +1,21 @@
 import { NextFunction, Request, Response } from "express";
-import { IPaginationQuery } from "../types/interfaces/request_queries";
 import { InferAttributes } from "sequelize";
 import User from "../models/User";
 import {
     createUser,
     deleteUserById,
     getAllUsers,
+    getUserByEmployeeNumber,
 } from "../services/users_service";
 import { HttpStatusCodes } from "../types/enums/http";
-import { IUserByIdParams } from "../types/interfaces/request_parameters";
+import {
+    IUserByEmployeeNumberParams,
+    IUserByIdParams,
+} from "../types/interfaces/request_parameters";
 import { ICreateUserBody } from "../types/interfaces/request_bodies";
 import { generateSecurePassword, hashString } from "../lib/security_service";
 import { sendUserCredentialsEmail } from "../lib/utils";
+import { IUserWithRoles } from "../types/interfaces/response_bodies";
 
 async function getAllUsersController(
     req: Request,
@@ -78,4 +82,24 @@ async function createUserController(
     }
 }
 
-export { getAllUsersController, deleteUserController, createUserController };
+async function getUserByEmployeeNumberController(
+    req: Request<IUserByEmployeeNumberParams>,
+    res: Response<IUserWithRoles>,
+    next: NextFunction
+) {
+    try {
+        const { employeeNumber } = req.params;
+        const user = await getUserByEmployeeNumber(employeeNumber!, false);
+
+        res.status(HttpStatusCodes.OK).json(user);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export {
+    getAllUsersController,
+    deleteUserController,
+    createUserController,
+    getUserByEmployeeNumberController,
+};
