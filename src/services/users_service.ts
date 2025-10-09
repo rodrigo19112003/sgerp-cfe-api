@@ -181,6 +181,32 @@ async function createUser(user: {
         const { employeeNumber, fullName, email, passwordHash, userRoles } =
             user;
 
+        const userWithSameEmployeeNumber = await db.User.findOne({
+            where: {
+                employeeNumber,
+            },
+        });
+
+        if (userWithSameEmployeeNumber !== null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMPLOYEENUMBER_ALREADY_EXIST,
+                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST
+            );
+        }
+
+        const userWithSameEmail = await db.User.findOne({
+            where: {
+                email,
+            },
+        });
+
+        if (userWithSameEmail !== null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMAIL_ALREADY_EXIST,
+                CreateOrUpdateUserErrorCodes.EMAIL_ALREADY_EXIST
+            );
+        }
+
         if (userRoles.includes(UserRoles.WORKER)) {
             workerId = (await validateRoleExists(UserRoles.WORKER)).id;
         }
@@ -255,6 +281,20 @@ async function updateUser(user: {
 
         const { userId, employeeNumber, fullName, userRoles } = user;
 
+        const userWithSameEmployeeNumber = await db.User.findOne({
+            where: {
+                employeeNumber,
+                id: { [Op.ne]: userId },
+            },
+        });
+
+        if (userWithSameEmployeeNumber !== null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMPLOYEENUMBER_ALREADY_EXIST,
+                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST
+            );
+        }
+
         const userInDatabase = await db.User.findByPk(userId);
 
         if (userInDatabase === null) {
@@ -291,20 +331,6 @@ async function updateUser(user: {
                     CreateOrUpdateUserErrorCodes.TWO_WITNESSES_ALREADY_EXIST
                 );
             }
-        }
-
-        const userWithSameEmployeeNumber = await db.User.findOne({
-            where: {
-                employeeNumber,
-                id: { [Op.ne]: userId },
-            },
-        });
-
-        if (userWithSameEmployeeNumber !== null) {
-            throw new BusinessLogicException(
-                ErrorMessages.EMPLOYEENUMBER_ALREADY_EXIST,
-                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST
-            );
         }
 
         await db.sequelize.transaction(async (t) => {
