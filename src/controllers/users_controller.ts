@@ -95,6 +95,8 @@ async function getUserByEmployeeNumberController(
         const { employeeNumber } = req.params;
         const user = await getUserByEmployeeNumber(employeeNumber!, false);
 
+        delete user.passwordHash;
+
         res.status(HttpStatusCodes.OK).json(user);
     } catch (error) {
         next(error);
