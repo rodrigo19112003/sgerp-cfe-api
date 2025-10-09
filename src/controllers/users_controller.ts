@@ -6,15 +6,19 @@ import {
     deleteUserById,
     getAllUsers,
     getUserByEmployeeNumber,
+    updateUser,
 } from "../services/users_service";
 import { HttpStatusCodes } from "../types/enums/http";
 import {
     IUserByEmployeeNumberParams,
     IUserByIdParams,
 } from "../types/interfaces/request_parameters";
-import { ICreateUserBody } from "../types/interfaces/request_bodies";
+import { ICreateOrUpdateUserBody } from "../types/interfaces/request_bodies";
 import { generateSecurePassword, hashString } from "../lib/security_service";
-import { sendUserCredentialsEmail } from "../lib/utils";
+import {
+    sendUpdatedUserInformationEmail,
+    sendUserCredentialsEmail,
+} from "../lib/utils";
 import { IUserWithRoles } from "../types/interfaces/response_bodies";
 
 async function getAllUsersController(
@@ -50,7 +54,7 @@ async function deleteUserController(
 }
 
 async function createUserController(
-    req: Request<{}, {}, ICreateUserBody, {}>,
+    req: Request<{}, {}, ICreateOrUpdateUserBody, {}>,
     res: Response,
     next: NextFunction
 ) {
@@ -97,9 +101,40 @@ async function getUserByEmployeeNumberController(
     }
 }
 
+async function updateUserController(
+    req: Request<IUserByIdParams, {}, ICreateOrUpdateUserBody, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { userId } = req.params;
+        const { employeeNumber, fullName, userRoles } = req.body;
+        const email = await updateUser({
+            userId: userId!,
+            employeeNumber: employeeNumber!,
+            fullName: fullName!,
+            userRoles: userRoles!,
+        });
+
+        setImmediate(() => {
+            sendUpdatedUserInformationEmail({
+                employeeNumber: employeeNumber!,
+                fullName: fullName!,
+                email: email!,
+                userRoles: userRoles!,
+            }).catch(() => {});
+        });
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export {
     getAllUsersController,
     deleteUserController,
     createUserController,
     getUserByEmployeeNumberController,
+    updateUserController,
 };

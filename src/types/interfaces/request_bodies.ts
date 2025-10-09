@@ -20,7 +20,7 @@ interface IChangingPasswordBody {
     password?: string;
 }
 
-interface ICreateUserBody {
+interface ICreateOrUpdateUserBody {
     employeeNumber?: string;
     fullName?: string;
     email?: string;
@@ -32,5 +32,5 @@ export {
     ISendingCodeToChangePasswordBody,
     IValidationCodeBody,
     IChangingPasswordBody,
-    ICreateUserBody,
+    ICreateOrUpdateUserBody,
 };

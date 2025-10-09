@@ -7,6 +7,7 @@ import {
     deleteUserValidationSchema,
     createUserValidationSchema,
     getUserByEmployeeNumberValidationSchema,
+    updateUserValidationSchema,
 } from "../validation_schemas/user";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetUsersListQueryMiddleware } from "../middlewares/value_injectors";
@@ -15,6 +16,7 @@ import {
     deleteUserController,
     getAllUsersController,
     getUserByEmployeeNumberController,
+    updateUserController,
 } from "../controllers/users_controller";
 
 const router = Router();
@@ -57,9 +59,12 @@ router.get(
 );
 
 router.put(
-    "/:employeeNumber",
+    "/:userId",
     checkTokenValidity,
-    allowRoles([UserRoles.ADMINISTRATOR])
+    allowRoles([UserRoles.ADMINISTRATOR]),
+    checkSchema(updateUserValidationSchema),
+    validateRequestSchemaMiddleware,
+    updateUserController
 );
 
 export default router;

@@ -89,8 +89,56 @@ async function sendUserCredentialsEmail(userInformation: {
     });
 }
 
+async function sendUpdatedUserInformationEmail(userInformation: {
+    employeeNumber: string;
+    fullName: string;
+    email: string;
+    userRoles: UserRoles[];
+}) {
+    const { employeeNumber, fullName, email, userRoles } = userInformation;
+    const rolesList = userRoles.map((role) => `• ${role}`).join("<br>");
+
+    await transporter.sendMail({
+        from: `"Soporte SGERP" <no-reply@sgerp.com>`,
+        to: email,
+        subject: "Actualización de tus datos en el Sistema SGERP",
+        text: `Hola ${fullName},
+
+        Tus datos han sido actualizados en el Sistema de Gestión de Entrega Recepción de Puestos. Tus roles ahora son:
+        ${userRoles.join(", ")}
+
+        Tus credenciales son:
+        RTT/RPE: ${employeeNumber}
+        Contraseña: *No cambió, ingresa con la que tienes actualmente*
+
+        Atentamente,
+        Equipo de Soporte SGERP`,
+        html: `
+      <div style="text-align: center; font-family: Arial, sans-serif; color: #333;">
+        <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
+        <p>Hola <strong>${fullName}</strong>,</p>
+        <p>Tus datos han sido actualizados en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong>. Tus roles ahora son:</p>
+        <p>${rolesList}</p>
+        <p>Tus credenciales de acceso son:</p>
+        <p>RTT/RPE: <strong>${employeeNumber}</strong><br>
+        Contraseña: <strong>*No cambió, ingresa con la que tienes actualmente*</strong></p>
+        <br>
+        <p>Atentamente,<br>Equipo de Soporte SGERP</p>
+      </div>
+    `,
+        attachments: [
+            {
+                filename: "sgerp-logo.png",
+                path: path.join(__dirname, "../assets/sgerp-logo.png"),
+                cid: "logo",
+            },
+        ],
+    });
+}
+
 export {
     generateValidationCode,
     sendValidationCodeEmail,
     sendUserCredentialsEmail,
+    sendUpdatedUserInformationEmail,
 };

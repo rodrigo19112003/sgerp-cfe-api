@@ -6,6 +6,8 @@ enum ErrorMessages {
     USER_NOT_FOUND = "The user with the specified id/employeeNumber is not registered",
     ROLE_NOT_FOUND = "A role you are trying to associate with the user is not registered in the system.",
     TWO_WITNESSES_ALREADY_EXIST = "There are already two witnesses registered in the system, there can only be two",
+    EMPLOYEENUMBER_ALREADY_EXIST = "There are already a user with the same employee number",
+    EMAIL_ALREADY_EXIST = "There are already a user with the same email",
 }
 
 export default ErrorMessages;
