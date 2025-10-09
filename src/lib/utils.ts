@@ -89,6 +89,45 @@ async function sendUserCredentialsEmail(userInformation: {
     });
 }
 
+async function sendDeletedUserNotificationEmail(userInformation: {
+    employeeNumber: string;
+    fullName: string;
+    email: string;
+}) {
+    const { employeeNumber, fullName, email } = userInformation;
+
+    await transporter.sendMail({
+        from: `"Soporte SGERP" <no-reply@sgerp.com>`,
+        to: email,
+        subject: "Notificación de eliminación de tu cuenta en SGERP",
+        text: `Hola ${employeeNumber} - ${fullName},
+
+        Queremos informarte que tu cuenta en el Sistema de Gestión de Entrega Recepción de Puestos ha sido eliminada.
+
+        A partir de este momento ya no podrás acceder al sistema y toda la información asociada a tu cuenta ha sido eliminada de manera permanente.
+
+        Atentamente,
+        Equipo de Soporte SGERP`,
+        html: `
+      <div style="text-align: center; font-family: Arial, sans-serif; color: #333;">
+        <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
+        <p>Hola <strong>${employeeNumber} - ${fullName}</strong>,</p>
+        <p>Queremos informarte que tu cuenta en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong> ha sido eliminada.</p>
+        <p>A partir de este momento ya no podrás acceder al sistema y toda tu información asociada ha sido eliminada de manera permanente.</p>
+        <br>
+        <p>Atentamente,<br>Equipo de Soporte SGERP</p>
+      </div>
+    `,
+        attachments: [
+            {
+                filename: "sgerp-logo.png",
+                path: path.join(__dirname, "../assets/sgerp-logo.png"),
+                cid: "logo",
+            },
+        ],
+    });
+}
+
 async function sendUpdatedUserInformationEmail(userInformation: {
     employeeNumber: string;
     fullName: string;
@@ -140,5 +179,6 @@ export {
     generateValidationCode,
     sendValidationCodeEmail,
     sendUserCredentialsEmail,
+    sendDeletedUserNotificationEmail,
     sendUpdatedUserInformationEmail,
 };

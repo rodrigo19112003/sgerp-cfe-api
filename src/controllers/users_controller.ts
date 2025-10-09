@@ -6,6 +6,7 @@ import {
     deleteUserById,
     getAllUsers,
     getUserByEmployeeNumber,
+    getUserById,
     updateUser,
 } from "../services/users_service";
 import { HttpStatusCodes } from "../types/enums/http";
@@ -16,6 +17,7 @@ import {
 import { ICreateOrUpdateUserBody } from "../types/interfaces/request_bodies";
 import { generateSecurePassword, hashString } from "../lib/security_service";
 import {
+    sendDeletedUserNotificationEmail,
     sendUpdatedUserInformationEmail,
     sendUserCredentialsEmail,
 } from "../lib/utils";
@@ -45,7 +47,17 @@ async function deleteUserController(
     try {
         const { userId } = req.params;
 
+        const user = await getUserById(userId!);
+
         await deleteUserById(userId!);
+
+        setImmediate(() => {
+            sendDeletedUserNotificationEmail({
+                employeeNumber: user.employeeNumber,
+                fullName: user.fullName,
+                email: user.email,
+            }).catch(() => {});
+        });
 
         res.sendStatus(HttpStatusCodes.CREATED);
     } catch (error) {
