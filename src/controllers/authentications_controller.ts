@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "../types/enums/http";
-import e, { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { hashString, compareHashedString } from "../lib/security_service";
 import {
     IChangingPasswordBody,
@@ -9,7 +9,6 @@ import {
 import BusinessLogicException from "../exceptions/business/BusinessLogicException";
 import ErrorMessages from "../types/enums/error_messages";
 import {
-    validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,
     updatePasswordByEmail,
@@ -23,8 +22,6 @@ async function sendCodeByEmailController(
 ) {
     try {
         const { email } = req.body;
-
-        await validateEmailExists(email!);
 
         const validationCode = generateValidationCode();
 

@@ -1,4 +1,4 @@
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import { IUserWithRoles } from "../types/interfaces/response_bodies";
@@ -403,26 +403,6 @@ async function validateRoleExists(roleName: string): Promise<Role> {
     return role;
 }
 
-async function validateEmailExists(email: string): Promise<void> {
-    try {
-        const user = await db.User.findOne({
-            where: { email },
-        });
-
-        if (user === null) {
-            throw new BusinessLogicException(
-                ErrorMessages.EMAIL_DOES_NOT_EXISTS
-            );
-        }
-    } catch (error: any) {
-        if (error.isTrusted) {
-            throw error;
-        } else {
-            throw new SQLException(error);
-        }
-    }
-}
-
 async function createValidationCode(
     validationCodeHash: string,
     email: string
@@ -516,7 +496,17 @@ async function updatePasswordByEmail(
     passwordHash: string
 ): Promise<void> {
     try {
-        await validateEmailExists(email);
+        const user = await db.User.findOne({
+            where: {
+                email,
+            },
+        });
+
+        if (user === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+            );
+        }
 
         await db.User.update(
             { passwordHash },
@@ -542,7 +532,6 @@ export {
     deleteUserById,
     createUser,
     updateUser,
-    validateEmailExists,
     createValidationCode,
     getValidationCodeByEmail,
     updatePasswordByEmail,

@@ -1,6 +1,8 @@
 import { InferAttributes } from "sequelize";
 import User from "../../models/User";
 import UserRoles from "../enums/user_roles";
+import DeliveryReceptionStatusCodes from "../enums/delivery_reception_status_codes";
+import DeliveryReceptionReceived from "../../models/DeliveryReceptionReceived";
 
 interface IErrorMessageWithCode {
     details: string;
@@ -13,4 +15,15 @@ interface IUserWithRoles extends Omit<InferAttributes<User>, "passwordHash"> {
     token?: string;
 }
 
-export { IErrorMessageWithCode, IUserWithRoles };
+interface IDeliveriesReceptionsWithWorkerWhoReceives
+    extends Omit<InferAttributes<DeliveryReceptionReceived>, "accepted"> {
+    employeeNumberReceiver: string;
+    fullNameReceiver: string;
+    status: DeliveryReceptionStatusCodes;
+}
+
+export {
+    IErrorMessageWithCode,
+    IUserWithRoles,
+    IDeliveriesReceptionsWithWorkerWhoReceives,
+};

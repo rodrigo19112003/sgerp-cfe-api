@@ -3,6 +3,7 @@ import cors from "cors";
 import sessionRouter from "../routes/sessions_router";
 import authenticationRouter from "../routes/authentications_router";
 import usersRouter from "../routes/users_router";
+import deliveriesReceptionsRouter from "../routes/deliveries_receptions_router";
 import handleApiErrorMiddleware from "../middlewares/error_handler";
 
 export default function createApp() {
@@ -22,6 +23,7 @@ export default function createApp() {
     app.use("/api/sessions", sessionRouter);
     app.use("/api/authentications", authenticationRouter);
     app.use("/api/users", usersRouter);
+    app.use("/api/deliveries-receptions", deliveriesReceptionsRouter);
 
     app.use(handleApiErrorMiddleware);
 
