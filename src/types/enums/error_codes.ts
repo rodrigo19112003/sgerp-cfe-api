@@ -17,6 +17,8 @@ enum CreateOrUpdateUserErrorCodes {
 enum DeleteDeliveryReceptionMadeErrorCodes {
     DELIVERY_RECEPTION_MADE_NOT_FOUND = EndpointContexts.DELETE_DELIVERY_RECEPTION_MADE +
         "-400001",
+    DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED = EndpointContexts.DELETE_DELIVERY_RECEPTION_MADE +
+        "-400002",
 }
 
 export {

@@ -8,7 +8,8 @@ enum ErrorMessages {
     TWO_WITNESSES_ALREADY_EXIST = "There are already two witnesses registered in the system, there can only be two",
     EMPLOYEENUMBER_ALREADY_EXIST = "There are already a user with the same employee number",
     EMAIL_ALREADY_EXIST = "There are already a user with the same email",
-    DELIVERY_RECEPTION_MADE_NOT_FOUND = "The delivery/reception with the specified id is not registered for the user",
+    DELIVERY_RECEPTION_MADE_NOT_FOUND = "The delivery-reception with the specified id is not registered for the user",
+    DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED = "The delivery-reception cannot be deleted because its status is not 'PENDING'",
 }
 
 export default ErrorMessages;

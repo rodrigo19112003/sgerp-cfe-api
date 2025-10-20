@@ -70,12 +70,13 @@ async function getAllDeliveriesReceptions(pagination: {
 
             let status: DeliveryReceptionStatusCodes;
 
-            const allNull = acceptedValues.every((v) => v === null);
-            const allTrue = acceptedValues.every((v) => v === true);
+            const signedCount = acceptedValues.filter(
+                (accepted) => accepted === true
+            ).length;
 
-            if (allNull) {
+            if (signedCount === 0) {
                 status = DeliveryReceptionStatusCodes.PENDING;
-            } else if (allTrue) {
+            } else if (signedCount === 3) {
                 status = DeliveryReceptionStatusCodes.RELEASED;
             } else {
                 status = DeliveryReceptionStatusCodes.IN_PROCESS;
@@ -124,6 +125,53 @@ async function deleteDeliveryReceptionById(
                 DeleteDeliveryReceptionMadeErrorCodes.DELIVERY_RECEPTION_MADE_NOT_FOUND,
                 HttpStatusCodes.NOT_FOUND
             );
+        }
+
+        const deliveriesReceptions = await db.DeliveryReceptionReceived.findAll(
+            {
+                include: [
+                    {
+                        model: db.DeliveryReception,
+                        as: "deliveryReception",
+                        where: { id: deliveryReceptionId },
+                    },
+                ],
+                order: [["id", "DESC"]],
+            }
+        );
+
+        const grouped = new Map<number, typeof deliveriesReceptions>();
+
+        for (const dr of deliveriesReceptions) {
+            const id = dr.deliveryReceptionId;
+            if (!grouped.has(id)) grouped.set(id, []);
+            grouped.get(id)!.push(dr);
+        }
+
+        for (const [_, group] of grouped) {
+            const acceptedValues = group.map((g) => g.accepted);
+
+            let status: DeliveryReceptionStatusCodes;
+
+            const signedCount = acceptedValues.filter(
+                (accepted) => accepted === true
+            ).length;
+
+            if (signedCount === 0) {
+                status = DeliveryReceptionStatusCodes.PENDING;
+            } else if (signedCount === 3) {
+                status = DeliveryReceptionStatusCodes.RELEASED;
+            } else {
+                status = DeliveryReceptionStatusCodes.IN_PROCESS;
+            }
+
+            if (status !== DeliveryReceptionStatusCodes.PENDING) {
+                throw new BusinessLogicException(
+                    ErrorMessages.DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED,
+                    DeleteDeliveryReceptionMadeErrorCodes.DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED,
+                    HttpStatusCodes.BAD_REQUEST
+                );
+            }
         }
 
         await db.DeliveryReception.destroy({
