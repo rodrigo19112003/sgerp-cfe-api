@@ -525,6 +525,74 @@ async function updatePasswordByEmail(
     }
 }
 
+async function getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId(
+    deliveryReceptionId: number
+): Promise<string[]> {
+    try {
+        const deliveriesReceptions = await db.DeliveryReceptionReceived.findAll(
+            {
+                where: { deliveryReceptionId },
+                include: [{ model: db.User, as: "user" }],
+            }
+        );
+
+        return deliveriesReceptions.map((dr) => dr.user!.email);
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
+    deliveryReceptionId: number
+): Promise<string[]> {
+    try {
+        const deliveryReception = await db.DeliveryReception.findByPk(
+            deliveryReceptionId,
+            {
+                include: [{ model: db.User, as: "user" }],
+            }
+        );
+
+        const deliveryReceptionReceived =
+            await db.DeliveryReceptionReceived.findOne({
+                where: { deliveryReceptionId },
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        include: [
+                            {
+                                model: db.Role,
+                                as: "roles",
+                                through: { attributes: [] },
+                                where: { name: UserRoles.WORKER },
+                            },
+                        ],
+                    },
+                ],
+            });
+
+        return [
+            deliveryReception!.user!.employeeNumber +
+                " - " +
+                deliveryReception!.user!.fullName,
+            deliveryReceptionReceived!.user!.employeeNumber +
+                " - " +
+                deliveryReceptionReceived!.user!.fullName,
+        ];
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
 export {
     getUserByEmployeeNumber,
     getUserById,
@@ -535,4 +603,6 @@ export {
     createValidationCode,
     getValidationCodeByEmail,
     updatePasswordByEmail,
+    getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId,
+    getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
 };

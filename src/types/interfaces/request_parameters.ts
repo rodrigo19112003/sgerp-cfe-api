@@ -6,4 +6,12 @@ interface IUserByEmployeeNumberParams {
     employeeNumber?: string;
 }
 
-export { IUserByIdParams, IUserByEmployeeNumberParams };
+interface IDeliveryReceptionByIdParams {
+    deliveryReceptionId?: number;
+}
+
+export {
+    IUserByIdParams,
+    IUserByEmployeeNumberParams,
+    IDeliveryReceptionByIdParams,
+};

@@ -3,6 +3,12 @@ import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import { IDeliveriesReceptionsWithWorkerWhoReceives } from "../types/interfaces/response_bodies";
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
+import BusinessLogicException from "../exceptions/business/BusinessLogicException";
+import ErrorMessages from "../types/enums/error_messages";
+import { DeleteDeliveryReceptionMadeErrorCodes } from "../types/enums/error_codes";
+import { HttpStatusCodes } from "../types/enums/http";
+import DeliveryReceptionReceived from "../models/DeliveryReceptionReceived";
+import UserRoles from "../types/enums/user_roles";
 
 async function getAllDeliveriesReceptions(pagination: {
     userId: number;
@@ -35,6 +41,13 @@ async function getAllDeliveriesReceptions(pagination: {
                         model: db.User,
                         as: "user",
                         where: whereCondition,
+                        include: [
+                            {
+                                model: db.Role,
+                                as: "roles",
+                                through: { attributes: [] },
+                            },
+                        ],
                     },
                 ],
                 order: [["id", "DESC"]],
@@ -68,12 +81,20 @@ async function getAllDeliveriesReceptions(pagination: {
                 status = DeliveryReceptionStatusCodes.IN_PROCESS;
             }
 
-            const first = group[0];
+            let deliveryReception: DeliveryReceptionReceived;
+
+            for (const dr of group) {
+                if (dr.user!.roles!.some((role) => role.name === "WORKER")) {
+                    deliveryReception = dr;
+                    break;
+                }
+            }
 
             deliveriesReceptionsList.push({
-                ...first.toJSON(),
-                employeeNumberReceiver: first.user!.employeeNumber,
-                fullNameReceiver: first.user!.fullName,
+                ...deliveryReception!.toJSON(),
+                deliveryReceptionId: deliveryReception!.deliveryReceptionId,
+                employeeNumberReceiver: deliveryReception!.user!.employeeNumber,
+                fullNameReceiver: deliveryReception!.user!.fullName,
                 status,
             });
         }
@@ -88,4 +109,30 @@ async function getAllDeliveriesReceptions(pagination: {
     }
 }
 
-export { getAllDeliveriesReceptions };
+async function deleteDeliveryReceptionById(
+    deliveryReceptionId: number,
+    userId: number
+): Promise<void> {
+    try {
+        const deliveryReception = await db.DeliveryReception.findOne({
+            where: { id: deliveryReceptionId, userId },
+        });
+
+        if (deliveryReception === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_MADE_NOT_FOUND,
+                DeleteDeliveryReceptionMadeErrorCodes.DELIVERY_RECEPTION_MADE_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        await db.DeliveryReception.destroy({
+            where: { id: deliveryReceptionId, userId },
+        });
+    } catch (error: any) {
+        if (error.isTrusted) throw error;
+        else throw new SQLException(error);
+    }
+}
+
+export { getAllDeliveriesReceptions, deleteDeliveryReceptionById };

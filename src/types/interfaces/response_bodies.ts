@@ -17,6 +17,7 @@ interface IUserWithRoles extends Omit<InferAttributes<User>, "passwordHash"> {
 
 interface IDeliveriesReceptionsWithWorkerWhoReceives
     extends Omit<InferAttributes<DeliveryReceptionReceived>, "accepted"> {
+    deliveryReceptionId: number;
     employeeNumberReceiver: string;
     fullNameReceiver: string;
     status: DeliveryReceptionStatusCodes;

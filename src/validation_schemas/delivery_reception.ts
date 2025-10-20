@@ -26,4 +26,19 @@ const getAllDeliveriesReceptionsValidationSchema: Schema = {
     },
 };
 
-export { getAllDeliveriesReceptionsValidationSchema };
+const deleteDeliveryReceptionValidationSchema: Schema = {
+    userId: {
+        in: ["params"],
+        isInt: {
+            options: { min: 1 },
+            errorMessage:
+                "Parameter deliveryReceptionId must be a positive integer",
+        },
+        toInt: true,
+    },
+};
+
+export {
+    getAllDeliveriesReceptionsValidationSchema,
+    deleteDeliveryReceptionValidationSchema,
+};
