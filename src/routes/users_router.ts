@@ -10,7 +10,7 @@ import {
     updateUserValidationSchema,
 } from "../validation_schemas/user";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
-import { injectDefaultGetUsersListQueryMiddleware } from "../middlewares/value_injectors";
+import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
     createUserController,
     deleteUserController,
@@ -27,7 +27,7 @@ router.get(
     allowRoles([UserRoles.ADMINISTRATOR]),
     checkSchema(getAllUsersValidationSchema),
     validateRequestSchemaMiddleware,
-    injectDefaultGetUsersListQueryMiddleware,
+    injectDefaultGetListQueryMiddleware,
     getAllUsersController
 );
 

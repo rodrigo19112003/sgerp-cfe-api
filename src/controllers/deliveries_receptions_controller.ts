@@ -2,23 +2,25 @@ import { NextFunction, Request, Response } from "express";
 import { HttpStatusCodes } from "../types/enums/http";
 import {
     deleteDeliveryReceptionById,
-    getAllDeliveriesReceptions,
+    getAllDeliveriesReceptionsMade,
+    getAllDeliveriesReceptionsReceived,
 } from "../services/deliveries_receptions_service";
-import { IDeliveriesReceptionsWithWorkerWhoReceives } from "../types/interfaces/response_bodies";
+import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bodies";
 import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
 import { getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId } from "../services/users_service";
 import { sendDeletedDeliveryReceptionEmail } from "../lib/utils";
+import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
 
-async function getAllDeliveriesReceptionsController(
+async function getAllDeliveriesReceptionsMadeController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorkerWhoReceives[]>,
+    res: Response<IDeliveriesReceptionsWithWorker[]>,
     next: NextFunction
 ) {
     try {
         const { id } = req.user;
         const { limit, offset, query } = (req as any).validatedQuery;
 
-        const deliveriesReceptions = await getAllDeliveriesReceptions({
+        const deliveriesReceptions = await getAllDeliveriesReceptionsMade({
             userId: id,
             limit,
             offset,
@@ -71,7 +73,102 @@ async function deleteDeliveryReceptionController(
     }
 }
 
+async function getAllDeliveriesReceptionsReceivedController(
+    req: Request,
+    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { limit, offset, query } = (req as any).validatedQuery;
+
+        const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
+            userId: id,
+            limit,
+            offset,
+            query,
+        });
+
+        res.status(HttpStatusCodes.OK).json(deliveriesReceptions);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getAllDeliveriesReceptionsPendingController(
+    req: Request,
+    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { limit, offset, query } = (req as any).validatedQuery;
+
+        const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
+            userId: id,
+            limit,
+            offset,
+            query,
+            deliveryReceptionStatus: DeliveryReceptionStatusCodes.PENDING,
+        });
+
+        res.status(HttpStatusCodes.OK).json(deliveriesReceptions);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getAllDeliveriesReceptionsInProcessController(
+    req: Request,
+    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { limit, offset, query } = (req as any).validatedQuery;
+
+        const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
+            userId: id,
+            limit,
+            offset,
+            query,
+            deliveryReceptionStatus: DeliveryReceptionStatusCodes.IN_PROCESS,
+        });
+
+        res.status(HttpStatusCodes.OK).json(deliveriesReceptions);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getAllDeliveriesReceptionsReleasedController(
+    req: Request,
+    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { limit, offset, query } = (req as any).validatedQuery;
+
+        const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
+            userId: id,
+            limit,
+            offset,
+            query,
+            deliveryReceptionStatus: DeliveryReceptionStatusCodes.PENDING,
+        });
+
+        res.status(HttpStatusCodes.OK).json(deliveriesReceptions);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export {
-    getAllDeliveriesReceptionsController,
+    getAllDeliveriesReceptionsMadeController,
     deleteDeliveryReceptionController,
+    getAllDeliveriesReceptionsReceivedController,
+    getAllDeliveriesReceptionsPendingController,
+    getAllDeliveriesReceptionsInProcessController,
+    getAllDeliveriesReceptionsReleasedController,
 };

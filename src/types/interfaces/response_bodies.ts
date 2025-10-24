@@ -15,16 +15,18 @@ interface IUserWithRoles extends Omit<InferAttributes<User>, "passwordHash"> {
     token?: string;
 }
 
-interface IDeliveriesReceptionsWithWorkerWhoReceives
+interface IDeliveriesReceptionsWithWorker
     extends Omit<InferAttributes<DeliveryReceptionReceived>, "accepted"> {
     deliveryReceptionId: number;
-    employeeNumberReceiver: string;
-    fullNameReceiver: string;
+    employeeNumberReceiver?: string;
+    fullNameReceiver?: string;
+    employeeNumberMaker?: string;
+    fullNameMaker?: string;
     status: DeliveryReceptionStatusCodes;
 }
 
 export {
     IErrorMessageWithCode,
     IUserWithRoles,
-    IDeliveriesReceptionsWithWorkerWhoReceives,
+    IDeliveriesReceptionsWithWorker,
 };

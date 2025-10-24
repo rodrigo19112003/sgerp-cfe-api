@@ -7,10 +7,12 @@ import {
     getAllDeliveriesReceptionsValidationSchema,
 } from "../validation_schemas/delivery_reception";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
-import { injectDefaultGetUsersListQueryMiddleware } from "../middlewares/value_injectors";
+import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
     deleteDeliveryReceptionController,
-    getAllDeliveriesReceptionsController,
+    getAllDeliveriesReceptionsMadeController,
+    getAllDeliveriesReceptionsPendingController,
+    getAllDeliveriesReceptionsReceivedController,
 } from "../controllers/deliveries_receptions_controller";
 
 const router = Router();
@@ -21,8 +23,8 @@ router.get(
     allowRoles([UserRoles.WORKER]),
     checkSchema(getAllDeliveriesReceptionsValidationSchema),
     validateRequestSchemaMiddleware,
-    injectDefaultGetUsersListQueryMiddleware,
-    getAllDeliveriesReceptionsController
+    injectDefaultGetListQueryMiddleware,
+    getAllDeliveriesReceptionsMadeController
 );
 
 router.delete(
@@ -32,6 +34,42 @@ router.delete(
     checkSchema(deleteDeliveryReceptionValidationSchema),
     validateRequestSchemaMiddleware,
     deleteDeliveryReceptionController
+);
+
+router.get(
+    "/received",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER]),
+    checkSchema(getAllDeliveriesReceptionsValidationSchema),
+    injectDefaultGetListQueryMiddleware,
+    getAllDeliveriesReceptionsReceivedController
+);
+
+router.get(
+    "/pending",
+    checkTokenValidity,
+    allowRoles([UserRoles.ZONE_MANAGER]),
+    checkSchema(getAllDeliveriesReceptionsValidationSchema),
+    injectDefaultGetListQueryMiddleware,
+    getAllDeliveriesReceptionsPendingController
+);
+
+router.get(
+    "/in-process",
+    checkTokenValidity,
+    allowRoles([UserRoles.ZONE_MANAGER]),
+    checkSchema(getAllDeliveriesReceptionsValidationSchema),
+    injectDefaultGetListQueryMiddleware,
+    getAllDeliveriesReceptionsPendingController
+);
+
+router.get(
+    "/released",
+    checkTokenValidity,
+    allowRoles([UserRoles.ZONE_MANAGER]),
+    checkSchema(getAllDeliveriesReceptionsValidationSchema),
+    injectDefaultGetListQueryMiddleware,
+    getAllDeliveriesReceptionsPendingController
 );
 
 export default router;
