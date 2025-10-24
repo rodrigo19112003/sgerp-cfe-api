@@ -152,7 +152,7 @@ export default class User extends Model<
 
         User.hasMany(models.DeliveryReception, {
             foreignKey: "idUsuario",
-            as: "deliveryReceptions",
+            as: "deliveriesReceptions",
         });
 
         User.hasMany(models.Comment, {

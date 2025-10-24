@@ -10,9 +10,11 @@ import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
     deleteDeliveryReceptionController,
+    getAllDeliveriesReceptionsInProcessController,
     getAllDeliveriesReceptionsMadeController,
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
+    getAllDeliveriesReceptionsReleasedController,
 } from "../controllers/deliveries_receptions_controller";
 
 const router = Router();
@@ -60,7 +62,7 @@ router.get(
     allowRoles([UserRoles.ZONE_MANAGER]),
     checkSchema(getAllDeliveriesReceptionsValidationSchema),
     injectDefaultGetListQueryMiddleware,
-    getAllDeliveriesReceptionsPendingController
+    getAllDeliveriesReceptionsInProcessController
 );
 
 router.get(
@@ -69,7 +71,7 @@ router.get(
     allowRoles([UserRoles.ZONE_MANAGER]),
     checkSchema(getAllDeliveriesReceptionsValidationSchema),
     injectDefaultGetListQueryMiddleware,
-    getAllDeliveriesReceptionsPendingController
+    getAllDeliveriesReceptionsReleasedController
 );
 
 export default router;

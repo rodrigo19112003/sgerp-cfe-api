@@ -155,7 +155,7 @@ async function getAllDeliveriesReceptionsReleasedController(
             limit,
             offset,
             query,
-            deliveryReceptionStatus: DeliveryReceptionStatusCodes.PENDING,
+            deliveryReceptionStatus: DeliveryReceptionStatusCodes.RELEASED,
         });
 
         res.status(HttpStatusCodes.OK).json(deliveriesReceptions);

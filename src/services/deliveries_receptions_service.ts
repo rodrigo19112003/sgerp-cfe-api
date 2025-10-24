@@ -204,16 +204,6 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
         const { userId, offset, limit, query, deliveryReceptionStatus } =
             pagination;
 
-        const whereCondition =
-            query && query.trim() !== ""
-                ? {
-                      [Op.or]: [
-                          { employeeNumber: { [Op.like]: `%${query}%` } },
-                          { fullName: { [Op.like]: `%${query}%` } },
-                      ],
-                  }
-                : undefined;
-
         const deliveriesReceptionsByUserId =
             await db.DeliveryReceptionReceived.findAll({
                 where: { userId },
@@ -225,7 +215,6 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
                             {
                                 model: db.User,
                                 as: "user",
-                                where: whereCondition,
                                 include: [
                                     {
                                         model: db.Role,
@@ -249,13 +238,23 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
                     },
                 ],
                 order: [["id", "DESC"]],
-                limit,
-                offset,
             });
 
-        if (deliveriesReceptionsByUserId.length === 0) return [];
+        const deliveriesReceptionsByUserIdFiltered = query
+            ? deliveriesReceptionsByUserId.filter((dr) => {
+                  const fullName =
+                      dr.deliveryReception?.user?.fullName?.toLowerCase() || "";
+                  const employeeNumber =
+                      dr.deliveryReception?.user?.employeeNumber?.toLowerCase() ||
+                      "";
+                  const q = query.toLowerCase();
+                  return fullName.includes(q) || employeeNumber.includes(q);
+              })
+            : deliveriesReceptionsByUserId;
 
-        const deliveryReceptionIds = deliveriesReceptionsByUserId.map(
+        if (deliveriesReceptionsByUserIdFiltered.length === 0) return [];
+
+        const deliveryReceptionIds = deliveriesReceptionsByUserIdFiltered.map(
             (dr) => dr.deliveryReceptionId
         );
 
@@ -274,7 +273,7 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
 
         const deliveriesReceptionsList: IDeliveriesReceptionsWithWorker[] = [];
 
-        for (const deliveryReceptionReceived of deliveriesReceptionsByUserId) {
+        for (const deliveryReceptionReceived of deliveriesReceptionsByUserIdFiltered) {
             const group = groupedByReception.get(
                 deliveryReceptionReceived.deliveryReceptionId
             );
