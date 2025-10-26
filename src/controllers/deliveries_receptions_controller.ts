@@ -5,6 +5,7 @@ import {
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsMade,
     getAllDeliveriesReceptionsReceived,
+    updateDeliveryReception,
 } from "../services/deliveries_receptions_service";
 import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bodies";
 import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
@@ -13,8 +14,10 @@ import {
     getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId,
 } from "../services/users_service";
 import {
+    decodeBase64Files,
     sendCreatedDeliveryReceptionEmail,
     sendDeletedDeliveryReceptionEmail,
+    sendUpdatedDeliveryReceptionEmail,
 } from "../lib/utils";
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
 import { ICreateOrUpdateDeliveryReceptionBody } from "../types/interfaces/request_bodies";
@@ -196,33 +199,22 @@ async function createDeliveryReceptionController(
             financialResourcesFile,
             humanResourcesFile,
             materialResourcesFile,
-            areaBugdetStatusFile,
+            areaBudgetStatusFile,
             programmaticStatusFile,
             employeeNumberReceiver,
         } = req.body;
 
+        decodeBase64Files([
+            procedureReportFile!,
+            financialResourcesFile!,
+            humanResourcesFile!,
+            materialResourcesFile!,
+            areaBudgetStatusFile!,
+            programmaticStatusFile!,
+        ]);
+
         procedureReportFile!.content! = Buffer.from(
             procedureReportFile!.content! as string,
-            "base64"
-        );
-        financialResourcesFile!.content! = Buffer.from(
-            financialResourcesFile!.content! as string,
-            "base64"
-        );
-        humanResourcesFile!.content! = Buffer.from(
-            humanResourcesFile!.content! as string,
-            "base64"
-        );
-        materialResourcesFile!.content! = Buffer.from(
-            materialResourcesFile!.content! as string,
-            "base64"
-        );
-        areaBugdetStatusFile!.content! = Buffer.from(
-            areaBugdetStatusFile!.content! as string,
-            "base64"
-        );
-        programmaticStatusFile!.content! = Buffer.from(
-            programmaticStatusFile!.content! as string,
             "base64"
         );
 
@@ -239,8 +231,8 @@ async function createDeliveryReceptionController(
             financialResourcesFile: financialResourcesFile!,
             humanResourcesFile: humanResourcesFile!,
             materialResourcesFile: materialResourcesFile!,
-            areaBugdetStatusFile: areaBugdetStatusFile!,
-            programaticStatusFile: programmaticStatusFile!,
+            areaBudgetStatusFile: areaBudgetStatusFile!,
+            programmaticStatusFile: programmaticStatusFile!,
             employeeNumberReceiver: employeeNumberReceiver!,
             makerUserId: id!,
         });
@@ -274,6 +266,95 @@ async function createDeliveryReceptionController(
     }
 }
 
+async function updateteDeliveryReceptionController(
+    req: Request<
+        IDeliveryReceptionByIdParams,
+        {},
+        ICreateOrUpdateDeliveryReceptionBody,
+        {}
+    >,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+
+        const { deliveryReceptionId } = req.params;
+
+        const {
+            generalData,
+            procedureReport,
+            otherFacts,
+            financialResources,
+            humanResources,
+            materialResources,
+            areaBudgetStatus,
+            programmaticStatus,
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBudgetStatusFile,
+            programmaticStatusFile,
+        } = req.body;
+
+        decodeBase64Files([
+            procedureReportFile!,
+            financialResourcesFile!,
+            humanResourcesFile!,
+            materialResourcesFile!,
+            areaBudgetStatusFile!,
+            programmaticStatusFile!,
+        ]);
+
+        await updateDeliveryReception({
+            deliveryReceptionId: deliveryReceptionId!,
+            generalData: generalData!,
+            procedureReport: procedureReport!,
+            otherFacts: otherFacts!,
+            financialResources: financialResources!,
+            humanResources: humanResources!,
+            materialResources: materialResources!,
+            areaBudgetStatus: areaBudgetStatus!,
+            programmaticStatus: programmaticStatus!,
+            procedureReportFile: procedureReportFile!,
+            financialResourcesFile: financialResourcesFile!,
+            humanResourcesFile: humanResourcesFile!,
+            materialResourcesFile: materialResourcesFile!,
+            areaBudgetStatusFile: areaBudgetStatusFile!,
+            programmaticStatusFile: programmaticStatusFile!,
+            makerUserId: id!,
+        });
+
+        const emails =
+            await getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+
+        const users =
+            await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+
+        const sendingWorker = users[0];
+        const receivingWorker = users[1];
+
+        for (const email of emails) {
+            setImmediate(() => {
+                sendUpdatedDeliveryReceptionEmail({
+                    sendingWorker,
+                    receivingWorker,
+                    email,
+                }).catch(() => {});
+            });
+        }
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export {
     getAllDeliveriesReceptionsMadeController,
     deleteDeliveryReceptionController,
@@ -282,4 +363,5 @@ export {
     getAllDeliveriesReceptionsInProcessController,
     getAllDeliveriesReceptionsReleasedController,
     createDeliveryReceptionController,
+    updateteDeliveryReceptionController,
 };

@@ -133,7 +133,7 @@ async function deleteDeliveryReceptionById(
 
         if (deliveryReception === null) {
             throw new BusinessLogicException(
-                ErrorMessages.DELIVERY_RECEPTION_MADE_NOT_FOUND,
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
                 DeleteDeliveryReceptionMadeErrorCodes.DELIVERY_RECEPTION_MADE_NOT_FOUND,
                 HttpStatusCodes.NOT_FOUND
             );
@@ -179,7 +179,7 @@ async function deleteDeliveryReceptionById(
 
             if (status !== DeliveryReceptionStatusCodes.PENDING) {
                 throw new BusinessLogicException(
-                    ErrorMessages.DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED,
+                    ErrorMessages.DELIVERY_RECEPTION_CANNOT_BE_DELETED,
                     DeleteDeliveryReceptionMadeErrorCodes.DELIVERY_RECEPTION_MADE_CANNOT_BE_DELETED,
                     HttpStatusCodes.BAD_REQUEST
                 );
@@ -382,8 +382,8 @@ async function createDeliveryReception(deliveryReception: {
     financialResourcesFile: IFile;
     humanResourcesFile: IFile;
     materialResourcesFile: IFile;
-    areaBugdetStatusFile: IFile;
-    programaticStatusFile: IFile;
+    areaBudgetStatusFile: IFile;
+    programmaticStatusFile: IFile;
     employeeNumberReceiver: string;
     makerUserId: number;
 }): Promise<number | null> {
@@ -402,8 +402,8 @@ async function createDeliveryReception(deliveryReception: {
             financialResourcesFile,
             humanResourcesFile,
             materialResourcesFile,
-            areaBugdetStatusFile,
-            programaticStatusFile,
+            areaBudgetStatusFile,
+            programmaticStatusFile,
             employeeNumberReceiver,
             makerUserId,
         } = deliveryReception;
@@ -418,6 +418,40 @@ async function createDeliveryReception(deliveryReception: {
                 CreateOrUpdateDeliveryReceptionErrorCodes.RECEIVING_WORKER_NOT_FOUND,
                 HttpStatusCodes.NOT_FOUND
             );
+        }
+
+        const deliveryReceptionExists = await db.DeliveryReception.findOne({
+            where: {
+                userId: makerUserId,
+            },
+            include: [
+                {
+                    model: db.DeliveryReceptionReceived,
+                    as: "received",
+                    where: { userId: receivingWorker.id },
+                },
+            ],
+        });
+
+        if (deliveryReceptionExists !== null) {
+            const deliveriesReceptionsReceived =
+                await db.DeliveryReceptionReceived.findAll({
+                    where: {
+                        deliveryReceptionId: deliveryReceptionExists.id,
+                    },
+                });
+
+            const signedCount = deliveriesReceptionsReceived
+                ? deliveriesReceptionsReceived.filter((g) => g.accepted).length
+                : 0;
+
+            if (signedCount !== 3) {
+                throw new BusinessLogicException(
+                    ErrorMessages.DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER,
+                    CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER,
+                    HttpStatusCodes.BAD_REQUEST
+                );
+            }
         }
 
         await db.sequelize.transaction(async () => {
@@ -448,10 +482,10 @@ async function createDeliveryReception(deliveryReception: {
                 materialResourcesFile.category
             );
             const areaBudgetCategory = await validateCategoryExists(
-                areaBugdetStatusFile.category
+                areaBudgetStatusFile.category
             );
             const programmaticCategory = await validateCategoryExists(
-                programaticStatusFile.category
+                programmaticStatusFile.category
             );
 
             await db.Evidence.bulkCreate([
@@ -480,14 +514,14 @@ async function createDeliveryReception(deliveryReception: {
                     deliveryReceptionId: deliveryReceptionCreated.id,
                 },
                 {
-                    name: areaBugdetStatusFile.name,
-                    content: areaBugdetStatusFile.content as Buffer,
+                    name: areaBudgetStatusFile.name,
+                    content: areaBudgetStatusFile.content as Buffer,
                     categoryId: areaBudgetCategory.id,
                     deliveryReceptionId: deliveryReceptionCreated.id,
                 },
                 {
-                    name: programaticStatusFile.name,
-                    content: programaticStatusFile.content as Buffer,
+                    name: programmaticStatusFile.name,
+                    content: programmaticStatusFile.content as Buffer,
                     categoryId: programmaticCategory.id,
                     deliveryReceptionId: deliveryReceptionCreated.id,
                 },
@@ -528,6 +562,135 @@ async function createDeliveryReception(deliveryReception: {
     return deliveryReceptionId;
 }
 
+async function updateDeliveryReception(deliveryReception: {
+    deliveryReceptionId: number;
+    generalData: string;
+    otherFacts: string;
+    procedureReport: string;
+    financialResources: string;
+    humanResources: string;
+    materialResources: string;
+    areaBudgetStatus: string;
+    programmaticStatus: string;
+    procedureReportFile: IFile;
+    financialResourcesFile: IFile;
+    humanResourcesFile: IFile;
+    materialResourcesFile: IFile;
+    areaBudgetStatusFile: IFile;
+    programmaticStatusFile: IFile;
+    makerUserId: number;
+}): Promise<void> {
+    try {
+        const {
+            deliveryReceptionId,
+            generalData,
+            procedureReport,
+            otherFacts,
+            financialResources,
+            humanResources,
+            materialResources,
+            areaBudgetStatus,
+            programmaticStatus,
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBudgetStatusFile,
+            programmaticStatusFile,
+            makerUserId,
+        } = deliveryReception;
+
+        const deliveryReceptionExists = await db.DeliveryReception.findOne({
+            where: {
+                id: deliveryReceptionId,
+                userId: makerUserId,
+            },
+        });
+
+        if (deliveryReceptionExists === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        await db.sequelize.transaction(async () => {
+            await db.DeliveryReception.update(
+                {
+                    generalData,
+                    procedureReport,
+                    otherFacts,
+                    financialResources,
+                    humanResources,
+                    materialResources,
+                    areaBudgetStatus,
+                    programmaticStatus,
+                },
+                {
+                    where: {
+                        id: deliveryReceptionId,
+                    },
+                }
+            );
+
+            const reportCategory = await validateCategoryExists(
+                procedureReportFile.category
+            );
+            const financialCategory = await validateCategoryExists(
+                financialResourcesFile.category
+            );
+            const humanCategory = await validateCategoryExists(
+                humanResourcesFile.category
+            );
+            const materialCategory = await validateCategoryExists(
+                materialResourcesFile.category
+            );
+            const areaBudgetCategory = await validateCategoryExists(
+                areaBudgetStatusFile.category
+            );
+            const programmaticCategory = await validateCategoryExists(
+                programmaticStatusFile.category
+            );
+
+            const evidencesToUpdate = [
+                { file: procedureReportFile, category: reportCategory },
+                { file: financialResourcesFile, category: financialCategory },
+                { file: humanResourcesFile, category: humanCategory },
+                { file: materialResourcesFile, category: materialCategory },
+                { file: areaBudgetStatusFile, category: areaBudgetCategory },
+                {
+                    file: programmaticStatusFile,
+                    category: programmaticCategory,
+                },
+            ];
+
+            await Promise.all(
+                evidencesToUpdate.map(({ file, category }) =>
+                    db.Evidence.update(
+                        {
+                            name: file.name,
+                            content: file.content as Buffer,
+                        },
+                        {
+                            where: {
+                                deliveryReceptionId,
+                                categoryId: category.id,
+                            },
+                        }
+                    )
+                )
+            );
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
 async function validateCategoryExists(roleName: string): Promise<Category> {
     let category: Category;
     try {
@@ -562,4 +725,5 @@ export {
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsReceived,
     createDeliveryReception,
+    updateDeliveryReception,
 };

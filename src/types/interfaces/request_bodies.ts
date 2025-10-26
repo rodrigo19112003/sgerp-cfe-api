@@ -34,6 +34,7 @@ interface IFile {
 }
 
 interface ICreateOrUpdateDeliveryReceptionBody {
+    deliveryReceptionId?: number;
     generalData?: string;
     otherFacts?: string;
     procedureReport?: string;
@@ -46,7 +47,7 @@ interface ICreateOrUpdateDeliveryReceptionBody {
     financialResourcesFile?: IFile;
     humanResourcesFile?: IFile;
     materialResourcesFile?: IFile;
-    areaBugdetStatusFile?: IFile;
+    areaBudgetStatusFile?: IFile;
     programmaticStatusFile?: IFile;
     employeeNumberReceiver?: string;
 }

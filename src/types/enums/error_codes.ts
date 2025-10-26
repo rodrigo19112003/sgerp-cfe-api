@@ -26,6 +26,10 @@ enum CreateOrUpdateDeliveryReceptionErrorCodes {
         "-400001",
     RECEIVING_WORKER_NOT_FOUND = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
         "-400002",
+    DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
+        "-400003",
+    DELIVERY_RECEPTION_NOT_FOUND = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
+        "-400004",
 }
 
 export {

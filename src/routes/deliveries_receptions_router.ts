@@ -6,6 +6,7 @@ import {
     createDeliveryReceptionValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     getAllDeliveriesReceptionsValidationSchema,
+    updateDeliveryReceptionValidationSchema,
 } from "../validation_schemas/delivery_reception";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
@@ -17,6 +18,7 @@ import {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
     getAllDeliveriesReceptionsReleasedController,
+    updateteDeliveryReceptionController,
 } from "../controllers/deliveries_receptions_controller";
 
 const router = Router();
@@ -83,6 +85,15 @@ router.post(
     checkSchema(createDeliveryReceptionValidationSchema),
     validateRequestSchemaMiddleware,
     createDeliveryReceptionController
+);
+
+router.put(
+    "/:deliveryReceptionId",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER]),
+    checkSchema(updateDeliveryReceptionValidationSchema),
+    validateRequestSchemaMiddleware,
+    updateteDeliveryReceptionController
 );
 
 export default router;
