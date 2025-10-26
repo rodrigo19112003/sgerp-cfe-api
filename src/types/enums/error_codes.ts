@@ -21,8 +21,16 @@ enum DeleteDeliveryReceptionMadeErrorCodes {
         "-400002",
 }
 
+enum CreateOrUpdateDeliveryReceptionErrorCodes {
+    CATEGORY_NOT_FOUND = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
+        "-400001",
+    RECEIVING_WORKER_NOT_FOUND = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
+        "-400002",
+}
+
 export {
     DeleteUserErrorCodes,
     CreateOrUpdateUserErrorCodes,
     DeleteDeliveryReceptionMadeErrorCodes,
+    CreateOrUpdateDeliveryReceptionErrorCodes,
 };

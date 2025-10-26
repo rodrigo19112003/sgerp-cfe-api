@@ -3,12 +3,14 @@ import { allowRoles, checkTokenValidity } from "../middlewares/access_control";
 import UserRoles from "../types/enums/user_roles";
 import { checkSchema } from "express-validator";
 import {
+    createDeliveryReceptionValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     getAllDeliveriesReceptionsValidationSchema,
 } from "../validation_schemas/delivery_reception";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
+    createDeliveryReceptionController,
     deleteDeliveryReceptionController,
     getAllDeliveriesReceptionsInProcessController,
     getAllDeliveriesReceptionsMadeController,
@@ -72,6 +74,15 @@ router.get(
     checkSchema(getAllDeliveriesReceptionsValidationSchema),
     injectDefaultGetListQueryMiddleware,
     getAllDeliveriesReceptionsReleasedController
+);
+
+router.post(
+    "/",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER]),
+    checkSchema(createDeliveryReceptionValidationSchema),
+    validateRequestSchemaMiddleware,
+    createDeliveryReceptionController
 );
 
 export default router;

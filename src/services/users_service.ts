@@ -334,7 +334,7 @@ async function updateUser(user: {
         }
 
         await db.sequelize.transaction(async (t) => {
-            const user = await db.User.update(
+            await db.User.update(
                 { employeeNumber, fullName },
                 {
                     where: { id: userId },
@@ -525,7 +525,7 @@ async function updatePasswordByEmail(
     }
 }
 
-async function getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId(
+async function getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
     deliveryReceptionId: number
 ): Promise<string[]> {
     try {
@@ -603,6 +603,6 @@ export {
     createValidationCode,
     getValidationCodeByEmail,
     updatePasswordByEmail,
-    getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId,
+    getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId,
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
 };

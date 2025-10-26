@@ -15,7 +15,7 @@ export default (sequelize: Sequelize) => {
                 field: "nombre",
                 allowNull: false,
             },
-            file: {
+            content: {
                 type: DataTypes.BLOB("medium"),
                 field: "evidencia",
                 allowNull: false,

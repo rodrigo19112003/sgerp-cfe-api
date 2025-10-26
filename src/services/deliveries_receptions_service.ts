@@ -5,10 +5,15 @@ import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bo
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
 import BusinessLogicException from "../exceptions/business/BusinessLogicException";
 import ErrorMessages from "../types/enums/error_messages";
-import { DeleteDeliveryReceptionMadeErrorCodes } from "../types/enums/error_codes";
+import {
+    CreateOrUpdateDeliveryReceptionErrorCodes,
+    DeleteDeliveryReceptionMadeErrorCodes,
+} from "../types/enums/error_codes";
 import { HttpStatusCodes } from "../types/enums/http";
 import DeliveryReceptionReceived from "../models/DeliveryReceptionReceived";
 import UserRoles from "../types/enums/user_roles";
+import { IFile } from "../types/interfaces/request_bodies";
+import Category from "../models/Category";
 
 async function getAllDeliveriesReceptionsMade(pagination: {
     userId: number;
@@ -364,8 +369,197 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
     }
 }
 
+async function createDeliveryReception(deliveryReception: {
+    generalData: string;
+    otherFacts: string;
+    procedureReport: string;
+    financialResources: string;
+    humanResources: string;
+    materialResources: string;
+    areaBudgetStatus: string;
+    programmaticStatus: string;
+    procedureReportFile: IFile;
+    financialResourcesFile: IFile;
+    humanResourcesFile: IFile;
+    materialResourcesFile: IFile;
+    areaBugdetStatusFile: IFile;
+    programaticStatusFile: IFile;
+    employeeNumberReceiver: string;
+    makerUserId: number;
+}): Promise<number | null> {
+    let deliveryReceptionId: number | null = null;
+    try {
+        const {
+            generalData,
+            procedureReport,
+            otherFacts,
+            financialResources,
+            humanResources,
+            materialResources,
+            areaBudgetStatus,
+            programmaticStatus,
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBugdetStatusFile,
+            programaticStatusFile,
+            employeeNumberReceiver,
+            makerUserId,
+        } = deliveryReception;
+
+        const receivingWorker = await db.User.findOne({
+            where: { employeeNumber: employeeNumberReceiver },
+        });
+
+        if (receivingWorker === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.RECEIVING_WORKER_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.RECEIVING_WORKER_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        await db.sequelize.transaction(async () => {
+            const deliveryReceptionCreated = await db.DeliveryReception.create({
+                generalData,
+                procedureReport,
+                otherFacts,
+                financialResources,
+                humanResources,
+                materialResources,
+                areaBudgetStatus,
+                programmaticStatus,
+                userId: makerUserId,
+            });
+
+            deliveryReceptionId = deliveryReceptionCreated.id;
+
+            const reportCategory = await validateCategoryExists(
+                procedureReportFile.category
+            );
+            const financialCategory = await validateCategoryExists(
+                financialResourcesFile.category
+            );
+            const humanCategory = await validateCategoryExists(
+                humanResourcesFile.category
+            );
+            const materialCategory = await validateCategoryExists(
+                materialResourcesFile.category
+            );
+            const areaBudgetCategory = await validateCategoryExists(
+                areaBugdetStatusFile.category
+            );
+            const programmaticCategory = await validateCategoryExists(
+                programaticStatusFile.category
+            );
+
+            await db.Evidence.bulkCreate([
+                {
+                    name: procedureReportFile.name,
+                    content: procedureReportFile.content as Buffer,
+                    categoryId: reportCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+                {
+                    name: financialResourcesFile.name,
+                    content: financialResourcesFile.content as Buffer,
+                    categoryId: financialCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+                {
+                    name: humanResourcesFile.name,
+                    content: humanResourcesFile.content as Buffer,
+                    categoryId: humanCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+                {
+                    name: materialResourcesFile.name,
+                    content: materialResourcesFile.content as Buffer,
+                    categoryId: materialCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+                {
+                    name: areaBugdetStatusFile.name,
+                    content: areaBugdetStatusFile.content as Buffer,
+                    categoryId: areaBudgetCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+                {
+                    name: programaticStatusFile.name,
+                    content: programaticStatusFile.content as Buffer,
+                    categoryId: programmaticCategory.id,
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                },
+            ]);
+
+            const zoneManagers = await db.User.findAll({
+                include: [
+                    {
+                        model: db.Role,
+                        as: "roles",
+                        where: { name: UserRoles.ZONE_MANAGER },
+                        through: { attributes: [] },
+                    },
+                ],
+            });
+
+            await db.DeliveryReceptionReceived.bulkCreate([
+                {
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                    userId: receivingWorker.id,
+                    accepted: null,
+                },
+                ...zoneManagers.map((zm) => ({
+                    deliveryReceptionId: deliveryReceptionCreated.id,
+                    userId: zm.id,
+                    accepted: null,
+                })),
+            ]);
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return deliveryReceptionId;
+}
+
+async function validateCategoryExists(roleName: string): Promise<Category> {
+    let category: Category;
+    try {
+        const categoryInDatabse = await db.Category.findOne({
+            where: {
+                name: roleName,
+            },
+        });
+
+        if (categoryInDatabse === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.CATEGORY_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.CATEGORY_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        category = categoryInDatabse;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return category;
+}
+
 export {
     getAllDeliveriesReceptionsMade,
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsReceived,
+    createDeliveryReception,
 };

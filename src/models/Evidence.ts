@@ -18,7 +18,7 @@ export default class Evidence extends Model<
 > {
     declare id: CreationOptional<number>;
     declare name: string;
-    declare file: Buffer;
+    declare content: Buffer;
 
     declare deliveryReceptionId: ForeignKey<DeliveryReception["id"]>;
     declare categoryId: ForeignKey<Category["id"]>;

@@ -1,15 +1,23 @@
 import { NextFunction, Request, Response } from "express";
 import { HttpStatusCodes } from "../types/enums/http";
 import {
+    createDeliveryReception,
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsMade,
     getAllDeliveriesReceptionsReceived,
 } from "../services/deliveries_receptions_service";
 import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bodies";
 import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
-import { getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId } from "../services/users_service";
-import { sendDeletedDeliveryReceptionEmail } from "../lib/utils";
+import {
+    getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
+    getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId,
+} from "../services/users_service";
+import {
+    sendCreatedDeliveryReceptionEmail,
+    sendDeletedDeliveryReceptionEmail,
+} from "../lib/utils";
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
+import { ICreateOrUpdateDeliveryReceptionBody } from "../types/interfaces/request_bodies";
 
 async function getAllDeliveriesReceptionsMadeController(
     req: Request,
@@ -43,12 +51,12 @@ async function deleteDeliveryReceptionController(
         const { id } = req.user;
 
         const emails =
-            await getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId(
+            await getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
                 deliveryReceptionId!
             );
 
         const users =
-            await getZoneManagerAndReceivingWorkerEmailsByDeliveryReceptionId(
+            await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
                 deliveryReceptionId!
             );
 
@@ -167,6 +175,105 @@ async function getAllDeliveriesReceptionsReleasedController(
     }
 }
 
+async function createDeliveryReceptionController(
+    req: Request<{}, {}, ICreateOrUpdateDeliveryReceptionBody, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+
+        const {
+            generalData,
+            procedureReport,
+            otherFacts,
+            financialResources,
+            humanResources,
+            materialResources,
+            areaBudgetStatus,
+            programmaticStatus,
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBugdetStatusFile,
+            programmaticStatusFile,
+            employeeNumberReceiver,
+        } = req.body;
+
+        procedureReportFile!.content! = Buffer.from(
+            procedureReportFile!.content! as string,
+            "base64"
+        );
+        financialResourcesFile!.content! = Buffer.from(
+            financialResourcesFile!.content! as string,
+            "base64"
+        );
+        humanResourcesFile!.content! = Buffer.from(
+            humanResourcesFile!.content! as string,
+            "base64"
+        );
+        materialResourcesFile!.content! = Buffer.from(
+            materialResourcesFile!.content! as string,
+            "base64"
+        );
+        areaBugdetStatusFile!.content! = Buffer.from(
+            areaBugdetStatusFile!.content! as string,
+            "base64"
+        );
+        programmaticStatusFile!.content! = Buffer.from(
+            programmaticStatusFile!.content! as string,
+            "base64"
+        );
+
+        const deliveryReceptionId = await createDeliveryReception({
+            generalData: generalData!,
+            procedureReport: procedureReport!,
+            otherFacts: otherFacts!,
+            financialResources: financialResources!,
+            humanResources: humanResources!,
+            materialResources: materialResources!,
+            areaBudgetStatus: areaBudgetStatus!,
+            programmaticStatus: programmaticStatus!,
+            procedureReportFile: procedureReportFile!,
+            financialResourcesFile: financialResourcesFile!,
+            humanResourcesFile: humanResourcesFile!,
+            materialResourcesFile: materialResourcesFile!,
+            areaBugdetStatusFile: areaBugdetStatusFile!,
+            programaticStatusFile: programmaticStatusFile!,
+            employeeNumberReceiver: employeeNumberReceiver!,
+            makerUserId: id!,
+        });
+
+        const emails =
+            await getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+
+        const users =
+            await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+
+        const sendingWorker = users[0];
+        const receivingWorker = users[1];
+
+        for (const email of emails) {
+            setImmediate(() => {
+                sendCreatedDeliveryReceptionEmail({
+                    sendingWorker,
+                    receivingWorker,
+                    email,
+                }).catch(() => {});
+            });
+        }
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export {
     getAllDeliveriesReceptionsMadeController,
     deleteDeliveryReceptionController,
@@ -174,4 +281,5 @@ export {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsInProcessController,
     getAllDeliveriesReceptionsReleasedController,
+    createDeliveryReceptionController,
 };
