@@ -195,18 +195,60 @@ async function deleteDeliveryReceptionById(
 
 async function getAllDeliveriesReceptionsReceived(pagination: {
     userId: number;
+    userRoles?: UserRoles[];
     offset: number;
     limit: number;
     query: string;
     deliveryReceptionStatus?: DeliveryReceptionStatusCodes | null;
 }): Promise<IDeliveriesReceptionsWithWorker[]> {
     try {
-        const { userId, offset, limit, query, deliveryReceptionStatus } =
-            pagination;
+        const {
+            userId,
+            userRoles,
+            offset,
+            limit,
+            query,
+            deliveryReceptionStatus,
+        } = pagination;
+
+        let filteredReceptionIds: number[] | null = null;
+        if (query && query.trim() !== "") {
+            const matchedReceptions = await db.DeliveryReception.findAll({
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        where: {
+                            [Op.or]: [
+                                { nombreCompleto: { [Op.like]: `%${query}%` } },
+                                {
+                                    registroPersonal: {
+                                        [Op.like]: `%${query}%`,
+                                    },
+                                },
+                            ],
+                        },
+                        attributes: [],
+                    },
+                ],
+            });
+            filteredReceptionIds = matchedReceptions.map((r) => r.id);
+            if (filteredReceptionIds.length === 0) return [];
+        }
 
         const deliveriesReceptionsByUserId =
             await db.DeliveryReceptionReceived.findAll({
-                where: { userId },
+                where: {
+                    userId,
+                    ...(filteredReceptionIds
+                        ? {
+                              deliveryReceptionId: {
+                                  [Op.in]: filteredReceptionIds,
+                              },
+                          }
+                        : {}),
+                },
                 include: [
                     {
                         model: db.DeliveryReception,
@@ -237,31 +279,23 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
                         ],
                     },
                 ],
+                offset,
+                limit,
                 order: [["id", "DESC"]],
             });
 
-        const deliveriesReceptionsByUserIdFiltered = query
-            ? deliveriesReceptionsByUserId.filter((dr) => {
-                  const fullName =
-                      dr.deliveryReception?.user?.fullName?.toLowerCase() || "";
-                  const employeeNumber =
-                      dr.deliveryReception?.user?.employeeNumber?.toLowerCase() ||
-                      "";
-                  const q = query.toLowerCase();
-                  return fullName.includes(q) || employeeNumber.includes(q);
-              })
-            : deliveriesReceptionsByUserId;
+        if (
+            !deliveriesReceptionsByUserId ||
+            deliveriesReceptionsByUserId.length === 0
+        )
+            return [];
 
-        if (deliveriesReceptionsByUserIdFiltered.length === 0) return [];
-
-        const deliveryReceptionIds = deliveriesReceptionsByUserIdFiltered.map(
+        const deliveryReceptionIds = deliveriesReceptionsByUserId.map(
             (dr) => dr.deliveryReceptionId
         );
 
         const allSignatures = await db.DeliveryReceptionReceived.findAll({
-            where: {
-                deliveryReceptionId: { [Op.in]: deliveryReceptionIds },
-            },
+            where: { deliveryReceptionId: { [Op.in]: deliveryReceptionIds } },
         });
 
         const groupedByReception = new Map<number, typeof allSignatures>();
@@ -273,22 +307,28 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
 
         const deliveriesReceptionsList: IDeliveriesReceptionsWithWorker[] = [];
 
-        for (const deliveryReceptionReceived of deliveriesReceptionsByUserIdFiltered) {
+        for (const deliveryReceptionReceived of deliveriesReceptionsByUserId) {
             const group = groupedByReception.get(
                 deliveryReceptionReceived.deliveryReceptionId
             );
-
             const signedCount = group
                 ? group.filter((g) => g.accepted).length
                 : 0;
 
             let status: DeliveryReceptionStatusCodes;
-            if (signedCount === 0) {
+            if (signedCount === 0)
                 status = DeliveryReceptionStatusCodes.PENDING;
-            } else if (signedCount === 3) {
+            else if (signedCount === 3)
                 status = DeliveryReceptionStatusCodes.RELEASED;
-            } else {
-                status = DeliveryReceptionStatusCodes.IN_PROCESS;
+            else status = DeliveryReceptionStatusCodes.IN_PROCESS;
+
+            if (userRoles && userRoles.includes(UserRoles.WITNESS)) {
+                const userSignature = group?.find(
+                    (g) => g.userId === userId && g.accepted
+                );
+                status = userSignature
+                    ? DeliveryReceptionStatusCodes.IN_PROCESS
+                    : DeliveryReceptionStatusCodes.PENDING;
             }
 
             if (
@@ -315,6 +355,7 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
 
         return deliveriesReceptionsList;
     } catch (error: any) {
+        console.log(error);
         if (error.isTrusted) {
             throw error;
         } else {

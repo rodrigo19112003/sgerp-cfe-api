@@ -101,11 +101,12 @@ async function getAllDeliveriesReceptionsPendingController(
     next: NextFunction
 ) {
     try {
-        const { id } = req.user;
+        const { id, userRoles } = req.user;
         const { limit, offset, query } = (req as any).validatedQuery;
 
         const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
             userId: id,
+            userRoles,
             limit,
             offset,
             query,
@@ -124,11 +125,12 @@ async function getAllDeliveriesReceptionsInProcessController(
     next: NextFunction
 ) {
     try {
-        const { id } = req.user;
+        const { id, userRoles } = req.user;
         const { limit, offset, query } = (req as any).validatedQuery;
 
         const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
             userId: id,
+            userRoles,
             limit,
             offset,
             query,
@@ -147,11 +149,12 @@ async function getAllDeliveriesReceptionsReleasedController(
     next: NextFunction
 ) {
     try {
-        const { id } = req.user;
+        const { id, userRoles } = req.user;
         const { limit, offset, query } = (req as any).validatedQuery;
 
         const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
             userId: id,
+            userRoles,
             limit,
             offset,
             query,
