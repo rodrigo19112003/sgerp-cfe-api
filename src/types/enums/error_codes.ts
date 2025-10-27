@@ -30,6 +30,8 @@ enum CreateOrUpdateDeliveryReceptionErrorCodes {
         "-400003",
     DELIVERY_RECEPTION_NOT_FOUND = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
         "-400004",
+    DELIVERY_RECEPTION_CANNOT_BE_MODIFIED = EndpointContexts.CREATE_UPDATE_DELIVERY_RECEPTION +
+        "-400005",
 }
 
 export {

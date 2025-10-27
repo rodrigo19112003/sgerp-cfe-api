@@ -1,7 +1,10 @@
 import { InferAttributes, Op } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
-import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bodies";
+import {
+    IDeliveryReceptionWithOpcionalWorkers,
+    IDeliveryReceptionWithStatusAndWorkers,
+} from "../types/interfaces/response_bodies";
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
 import BusinessLogicException from "../exceptions/business/BusinessLogicException";
 import ErrorMessages from "../types/enums/error_messages";
@@ -14,13 +17,14 @@ import DeliveryReceptionReceived from "../models/DeliveryReceptionReceived";
 import UserRoles from "../types/enums/user_roles";
 import { IFile } from "../types/interfaces/request_bodies";
 import Category from "../models/Category";
+import User from "../models/User";
 
 async function getAllDeliveriesReceptionsMade(pagination: {
     userId: number;
     offset: number;
     limit: number;
     query: string;
-}): Promise<IDeliveriesReceptionsWithWorker[]> {
+}): Promise<IDeliveryReceptionWithOpcionalWorkers[]> {
     try {
         const { userId, offset, limit, query } = pagination;
 
@@ -66,7 +70,8 @@ async function getAllDeliveriesReceptionsMade(pagination: {
             grouped.get(id)!.push(dr);
         }
 
-        const deliveriesReceptionsList: IDeliveriesReceptionsWithWorker[] = [];
+        const deliveriesReceptionsList: IDeliveryReceptionWithOpcionalWorkers[] =
+            [];
 
         for (const [_, group] of grouped) {
             const acceptedValues = group.map((g) => g.accepted);
@@ -85,18 +90,12 @@ async function getAllDeliveriesReceptionsMade(pagination: {
                 status = DeliveryReceptionStatusCodes.IN_PROCESS;
             }
 
-            let deliveryReceptionReceived: DeliveryReceptionReceived;
-
-            for (const dr of group) {
-                if (
-                    dr.user!.roles!.some(
+            const deliveryReceptionReceived = deliveriesReceptionsReceived.find(
+                (r) =>
+                    r.user?.roles?.some(
                         (role) => role.name === UserRoles.WORKER
                     )
-                ) {
-                    deliveryReceptionReceived = dr;
-                    break;
-                }
-            }
+            )!;
 
             deliveriesReceptionsList.push({
                 ...deliveryReceptionReceived!.toJSON(),
@@ -205,7 +204,7 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
     limit: number;
     query: string;
     deliveryReceptionStatus?: DeliveryReceptionStatusCodes | null;
-}): Promise<IDeliveriesReceptionsWithWorker[]> {
+}): Promise<IDeliveryReceptionWithOpcionalWorkers[]> {
     try {
         const {
             userId,
@@ -310,7 +309,8 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
             groupedByReception.get(id)!.push(sig);
         }
 
-        const deliveriesReceptionsList: IDeliveriesReceptionsWithWorker[] = [];
+        const deliveriesReceptionsList: IDeliveryReceptionWithOpcionalWorkers[] =
+            [];
 
         for (const deliveryReceptionReceived of deliveriesReceptionsByUserId) {
             const group = groupedByReception.get(
@@ -321,11 +321,13 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
                 : 0;
 
             let status: DeliveryReceptionStatusCodes;
-            if (signedCount === 0)
+            if (signedCount === 0) {
                 status = DeliveryReceptionStatusCodes.PENDING;
-            else if (signedCount === 3)
+            } else if (signedCount === 3) {
                 status = DeliveryReceptionStatusCodes.RELEASED;
-            else status = DeliveryReceptionStatusCodes.IN_PROCESS;
+            } else {
+                status = DeliveryReceptionStatusCodes.IN_PROCESS;
+            }
 
             if (userRoles && userRoles.includes(UserRoles.WITNESS)) {
                 const userSignature = group?.find(
@@ -562,6 +564,110 @@ async function createDeliveryReception(deliveryReception: {
     return deliveryReceptionId;
 }
 
+async function getDeliveryReceptonById(
+    deliveryReceptionId: number,
+    userId: number,
+    userRoles: UserRoles[]
+): Promise<IDeliveryReceptionWithStatusAndWorkers> {
+    let deliveryReception: IDeliveryReceptionWithStatusAndWorkers;
+    try {
+        const deliveryReceptionInDatabae = await db.DeliveryReception.findByPk(
+            deliveryReceptionId,
+            {
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        include: [
+                            {
+                                model: db.Role,
+                                as: "roles",
+                                through: { attributes: [] },
+                            },
+                        ],
+                    },
+                    {
+                        model: db.DeliveryReceptionReceived,
+                        as: "received",
+                        include: [
+                            {
+                                model: db.User,
+                                as: "user",
+                                include: [
+                                    {
+                                        model: db.Role,
+                                        as: "roles",
+                                        through: { attributes: [] },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            }
+        );
+
+        if (deliveryReceptionInDatabae === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        const deliveriesReceptionsReceived =
+            await db.DeliveryReceptionReceived.findAll({
+                where: {
+                    deliveryReceptionId: deliveryReceptionInDatabae.id,
+                },
+            });
+
+        const signedCount = deliveriesReceptionsReceived
+            ? deliveriesReceptionsReceived.filter((g) => g.accepted).length
+            : 0;
+
+        let status: DeliveryReceptionStatusCodes;
+        if (signedCount === 0) {
+            status = DeliveryReceptionStatusCodes.PENDING;
+        } else if (signedCount === 3) {
+            status = DeliveryReceptionStatusCodes.RELEASED;
+        } else {
+            status = DeliveryReceptionStatusCodes.IN_PROCESS;
+        }
+
+        if (userRoles.includes(UserRoles.WITNESS)) {
+            const userSignature = deliveriesReceptionsReceived.find(
+                (g) => g.userId === userId && g.accepted
+            );
+            status = userSignature
+                ? DeliveryReceptionStatusCodes.IN_PROCESS
+                : DeliveryReceptionStatusCodes.PENDING;
+        }
+
+        const receivingWorker = deliveriesReceptionsReceived.find((r) =>
+            r.user!.roles!.some((role) => role.name === UserRoles.WORKER)
+        )!.user!;
+
+        deliveryReception = {
+            ...deliveryReceptionInDatabae.toJSON(),
+            status,
+            fullNameMaker: deliveryReceptionInDatabae.user!.fullName,
+            employeeNumberMaker:
+                deliveryReceptionInDatabae.user!.employeeNumber,
+            fullNameReceiver: receivingWorker!.fullName,
+            employeeNumberReceiver: receivingWorker!.employeeNumber,
+        };
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+
+    return deliveryReception;
+}
+
 async function updateDeliveryReception(deliveryReception: {
     deliveryReceptionId: number;
     generalData: string;
@@ -613,6 +719,25 @@ async function updateDeliveryReception(deliveryReception: {
                 CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
                 HttpStatusCodes.NOT_FOUND
             );
+        } else {
+            const deliveriesReceptionsReceived =
+                await db.DeliveryReceptionReceived.findAll({
+                    where: {
+                        deliveryReceptionId: deliveryReceptionExists.id,
+                    },
+                });
+
+            const signedCount = deliveriesReceptionsReceived
+                ? deliveriesReceptionsReceived.filter((g) => g.accepted).length
+                : 0;
+
+            if (signedCount !== 0) {
+                throw new BusinessLogicException(
+                    ErrorMessages.DELIVERY_RECEPTION_CANNOT_BE_MODIFIED,
+                    CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_CANNOT_BE_MODIFIED,
+                    HttpStatusCodes.BAD_REQUEST
+                );
+            }
         }
 
         await db.sequelize.transaction(async () => {
@@ -725,5 +850,6 @@ export {
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsReceived,
     createDeliveryReception,
+    getDeliveryReceptonById,
     updateDeliveryReception,
 };

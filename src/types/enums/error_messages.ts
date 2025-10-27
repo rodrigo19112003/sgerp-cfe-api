@@ -13,6 +13,7 @@ enum ErrorMessages {
     CATEGORY_NOT_FOUND = "A category you are trying to associate with the delivery-reception is not registered in the system.",
     RECEIVING_WORKER_NOT_FOUND = "The receiving worker with the specified employee number does not exist.",
     DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER = "There is already a delivery-reception registered for the specified worker that is not yet 'RELEASED'",
+    DELIVERY_RECEPTION_CANNOT_BE_MODIFIED = "The delivery-reception cannot be modified because its status is not 'PENDING'",
 }
 
 export default ErrorMessages;

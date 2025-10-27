@@ -1,13 +1,17 @@
-import { NextFunction, Request, Response } from "express";
+import e, { NextFunction, Request, Response } from "express";
 import { HttpStatusCodes } from "../types/enums/http";
 import {
     createDeliveryReception,
     deleteDeliveryReceptionById,
     getAllDeliveriesReceptionsMade,
     getAllDeliveriesReceptionsReceived,
+    getDeliveryReceptonById,
     updateDeliveryReception,
 } from "../services/deliveries_receptions_service";
-import { IDeliveriesReceptionsWithWorker } from "../types/interfaces/response_bodies";
+import {
+    IDeliveryReceptionWithOpcionalWorkers,
+    IDeliveryReceptionWithStatusAndWorkers,
+} from "../types/interfaces/response_bodies";
 import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
 import {
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
@@ -24,7 +28,7 @@ import { ICreateOrUpdateDeliveryReceptionBody } from "../types/interfaces/reques
 
 async function getAllDeliveriesReceptionsMadeController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    res: Response<IDeliveryReceptionWithOpcionalWorkers[]>,
     next: NextFunction
 ) {
     try {
@@ -86,7 +90,7 @@ async function deleteDeliveryReceptionController(
 
 async function getAllDeliveriesReceptionsReceivedController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    res: Response<IDeliveryReceptionWithOpcionalWorkers[]>,
     next: NextFunction
 ) {
     try {
@@ -108,7 +112,7 @@ async function getAllDeliveriesReceptionsReceivedController(
 
 async function getAllDeliveriesReceptionsPendingController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    res: Response<IDeliveryReceptionWithOpcionalWorkers[]>,
     next: NextFunction
 ) {
     try {
@@ -132,7 +136,7 @@ async function getAllDeliveriesReceptionsPendingController(
 
 async function getAllDeliveriesReceptionsInProcessController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    res: Response<IDeliveryReceptionWithOpcionalWorkers[]>,
     next: NextFunction
 ) {
     try {
@@ -156,7 +160,7 @@ async function getAllDeliveriesReceptionsInProcessController(
 
 async function getAllDeliveriesReceptionsReleasedController(
     req: Request,
-    res: Response<IDeliveriesReceptionsWithWorker[]>,
+    res: Response<IDeliveryReceptionWithOpcionalWorkers[]>,
     next: NextFunction
 ) {
     try {
@@ -266,6 +270,27 @@ async function createDeliveryReceptionController(
     }
 }
 
+async function getDeliveryReceptonByIdController(
+    req: Request<IDeliveryReceptionByIdParams, {}, {}, {}>,
+    res: Response<IDeliveryReceptionWithStatusAndWorkers>,
+    next: NextFunction
+) {
+    try {
+        const { id, userRoles } = req.user;
+        const { deliveryReceptionId } = req.params;
+
+        const deliveryReception = await getDeliveryReceptonById(
+            deliveryReceptionId!,
+            id,
+            userRoles
+        );
+
+        res.status(HttpStatusCodes.OK).json(deliveryReception);
+    } catch (error) {
+        next(error);
+    }
+}
+
 async function updateteDeliveryReceptionController(
     req: Request<
         IDeliveryReceptionByIdParams,
@@ -363,5 +388,6 @@ export {
     getAllDeliveriesReceptionsInProcessController,
     getAllDeliveriesReceptionsReleasedController,
     createDeliveryReceptionController,
+    getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
 };

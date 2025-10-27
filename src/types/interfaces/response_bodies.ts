@@ -3,6 +3,7 @@ import User from "../../models/User";
 import UserRoles from "../enums/user_roles";
 import DeliveryReceptionStatusCodes from "../enums/delivery_reception_status_codes";
 import DeliveryReceptionReceived from "../../models/DeliveryReceptionReceived";
+import DeliveryReception from "../../models/DeliveryReception";
 
 interface IErrorMessageWithCode {
     details: string;
@@ -15,9 +16,18 @@ interface IUserWithRoles extends Omit<InferAttributes<User>, "passwordHash"> {
     token?: string;
 }
 
-interface IDeliveriesReceptionsWithWorker
+interface IDeliveryReceptionWithOpcionalWorkers
     extends Omit<InferAttributes<DeliveryReceptionReceived>, "accepted"> {
     deliveryReceptionId: number;
+    employeeNumberReceiver?: string;
+    fullNameReceiver?: string;
+    employeeNumberMaker?: string;
+    fullNameMaker?: string;
+    status: DeliveryReceptionStatusCodes;
+}
+
+interface IDeliveryReceptionWithStatusAndWorkers
+    extends InferAttributes<DeliveryReception> {
     employeeNumberReceiver?: string;
     fullNameReceiver?: string;
     employeeNumberMaker?: string;
@@ -28,5 +38,6 @@ interface IDeliveriesReceptionsWithWorker
 export {
     IErrorMessageWithCode,
     IUserWithRoles,
-    IDeliveriesReceptionsWithWorker,
+    IDeliveryReceptionWithOpcionalWorkers,
+    IDeliveryReceptionWithStatusAndWorkers,
 };

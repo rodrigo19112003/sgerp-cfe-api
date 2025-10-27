@@ -18,6 +18,7 @@ import {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
     getAllDeliveriesReceptionsReleasedController,
+    getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
 } from "../controllers/deliveries_receptions_controller";
 
@@ -85,6 +86,15 @@ router.post(
     checkSchema(createDeliveryReceptionValidationSchema),
     validateRequestSchemaMiddleware,
     createDeliveryReceptionController
+);
+
+router.get(
+    "/:deliveryReceptionId",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER, UserRoles.ZONE_MANAGER]),
+    checkSchema(updateDeliveryReceptionValidationSchema),
+    validateRequestSchemaMiddleware,
+    getDeliveryReceptonByIdController
 );
 
 router.put(
