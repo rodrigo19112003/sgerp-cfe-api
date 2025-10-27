@@ -28,7 +28,7 @@ const getAllDeliveriesReceptionsValidationSchema: Schema = {
 };
 
 const deleteDeliveryReceptionValidationSchema: Schema = {
-    userId: {
+    deliveryReceptionId: {
         in: ["params"],
         isInt: {
             options: { min: 1 },
@@ -129,9 +129,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.REPORT &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "procedureReportFile must contain valid name, category, and content",
         },
@@ -145,9 +145,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.FINANCE &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "financialResourcesFile must contain valid name, category, and content",
         },
@@ -161,9 +161,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.HUMAN &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "humanResourcesFile must contain valid name, category, and content",
         },
@@ -177,9 +177,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.MATERIAL &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "materialResourcesFile must contain valid name, category, and content",
         },
@@ -193,9 +193,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.BUDGET &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "areaBudgetStatusFile must contain valid name, category, and content",
         },
@@ -209,9 +209,9 @@ const createDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.PROGRAMMATIC &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "programmaticStatusFile must contain valid name, category, and content",
         },
@@ -417,9 +417,19 @@ const updateDeliveryReceptionValidationSchema: Schema = {
     },
 };
 
+const getDeliveryReceptionByIdValidationSchema: Schema = {
+    deliveryReceptionId: {
+        in: ["params"],
+        isInt: { errorMessage: "deliveryReceptionId must be a number" },
+        toInt: true,
+        notEmpty: { errorMessage: "deliveryReceptionId is required" },
+    },
+};
+
 export {
     getAllDeliveriesReceptionsValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     createDeliveryReceptionValidationSchema,
     updateDeliveryReceptionValidationSchema,
+    getDeliveryReceptionByIdValidationSchema,
 };

@@ -564,12 +564,14 @@ async function getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
                     {
                         model: db.User,
                         as: "user",
+                        required: true,
                         include: [
                             {
                                 model: db.Role,
                                 as: "roles",
                                 through: { attributes: [] },
                                 where: { name: UserRoles.WORKER },
+                                required: true,
                             },
                         ],
                     },

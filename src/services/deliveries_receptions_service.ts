@@ -131,7 +131,6 @@ async function deleteDeliveryReceptionById(
         const deliveryReception = await db.DeliveryReception.findOne({
             where: { id: deliveryReceptionId, userId },
         });
-
         if (deliveryReception === null) {
             throw new BusinessLogicException(
                 ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
@@ -315,12 +314,27 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
             [];
 
         for (const deliveryReceptionReceived of deliveriesReceptionsByUserId) {
-            const group = groupedByReception.get(
-                deliveryReceptionReceived.deliveryReceptionId
-            );
-            const signedCount = group
-                ? group.filter((g) => g.accepted).length
-                : 0;
+            const allSignatures = await db.DeliveryReceptionReceived.findAll({
+                where: {
+                    deliveryReceptionId:
+                        deliveryReceptionReceived.deliveryReceptionId,
+                },
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        include: [
+                            {
+                                model: db.Role,
+                                as: "roles",
+                                through: { attributes: [] },
+                            },
+                        ],
+                    },
+                ],
+            });
+
+            const signedCount = allSignatures.filter((g) => g.accepted).length;
 
             let status: DeliveryReceptionStatusCodes;
             if (signedCount === 0) {
@@ -332,13 +346,21 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
             }
 
             if (userRoles && userRoles.includes(UserRoles.WITNESS)) {
-                const userSignature = group?.find(
+                const userSignature = allSignatures.find(
                     (g) => g.userId === userId && g.accepted
                 );
                 status = userSignature
                     ? DeliveryReceptionStatusCodes.IN_PROCESS
                     : DeliveryReceptionStatusCodes.PENDING;
             }
+
+            const workerSignature = allSignatures.find((sig) =>
+                sig.user?.roles?.some((role) => role.name === UserRoles.WORKER)
+            );
+
+            const employeeNumberReceiver =
+                workerSignature?.user?.employeeNumber || "";
+            const fullNameReceiver = workerSignature?.user?.fullName || "";
 
             if (
                 !deliveryReceptionStatus ||
@@ -348,9 +370,8 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
                     ...deliveryReceptionReceived.toJSON(),
                     deliveryReceptionId:
                         deliveryReceptionReceived.deliveryReception!.id,
-                    employeeNumberReceiver:
-                        deliveryReceptionReceived.user!.employeeNumber,
-                    fullNameReceiver: deliveryReceptionReceived.user!.fullName,
+                    employeeNumberReceiver,
+                    fullNameReceiver,
                     employeeNumberMaker:
                         deliveryReceptionReceived.deliveryReception!.user!
                             .employeeNumber,
@@ -364,7 +385,6 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
 
         return deliveriesReceptionsList;
     } catch (error: any) {
-        console.log(error);
         if (error.isTrusted) {
             throw error;
         } else {
@@ -414,6 +434,17 @@ async function createDeliveryReception(deliveryReception: {
 
         const receivingWorker = await db.User.findOne({
             where: { employeeNumber: employeeNumberReceiver },
+            include: [
+                {
+                    model: db.Role,
+                    as: "roles",
+                    where: {
+                        name: UserRoles.WORKER,
+                    },
+                    required: true,
+                    through: { attributes: [] },
+                },
+            ],
         });
 
         if (receivingWorker === null) {

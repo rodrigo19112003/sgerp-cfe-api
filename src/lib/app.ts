@@ -9,6 +9,9 @@ import handleApiErrorMiddleware from "../middlewares/error_handler";
 export default function createApp() {
     const app = express();
 
+    app.use(express.json({ limit: "100mb" }));
+    app.use(express.urlencoded({ limit: "100mb", extended: true }));
+
     app.use(
         cors({
             origin: process.env.CLIENT_APPLICATION_HOST,

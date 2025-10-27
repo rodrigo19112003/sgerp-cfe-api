@@ -6,6 +6,7 @@ import {
     createDeliveryReceptionValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     getAllDeliveriesReceptionsValidationSchema,
+    getDeliveryReceptionByIdValidationSchema,
     updateDeliveryReceptionValidationSchema,
 } from "../validation_schemas/delivery_reception";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
@@ -92,7 +93,7 @@ router.get(
     "/:deliveryReceptionId",
     checkTokenValidity,
     allowRoles([UserRoles.WORKER, UserRoles.ZONE_MANAGER]),
-    checkSchema(updateDeliveryReceptionValidationSchema),
+    checkSchema(getDeliveryReceptionByIdValidationSchema),
     validateRequestSchemaMiddleware,
     getDeliveryReceptonByIdController
 );
