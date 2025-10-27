@@ -4,6 +4,7 @@ import UserRoles from "../enums/user_roles";
 import DeliveryReceptionStatusCodes from "../enums/delivery_reception_status_codes";
 import DeliveryReceptionReceived from "../../models/DeliveryReceptionReceived";
 import DeliveryReception from "../../models/DeliveryReception";
+import { IFile } from "./request_bodies";
 
 interface IErrorMessageWithCode {
     details: string;
@@ -28,6 +29,12 @@ interface IDeliveryReceptionWithOpcionalWorkers
 
 interface IDeliveryReceptionWithStatusAndWorkers
     extends InferAttributes<DeliveryReception> {
+    procedureReportFile?: IFile;
+    financialResourcesFile?: IFile;
+    humanResourcesFile?: IFile;
+    materialResourcesFile?: IFile;
+    areaBudgetStatusFile?: IFile;
+    programmaticStatusFile?: IFile;
     employeeNumberReceiver?: string;
     fullNameReceiver?: string;
     employeeNumberMaker?: string;

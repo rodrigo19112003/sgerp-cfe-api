@@ -1,3 +1,4 @@
+import EvidenceCategories from "../enums/evidence_categories";
 import UserRoles from "../enums/user_roles";
 
 interface ILoginBody {
@@ -28,7 +29,7 @@ interface ICreateOrUpdateUserBody {
 }
 
 interface IFile {
-    category: string;
+    category: EvidenceCategories;
     name: string;
     content: string | Buffer;
 }

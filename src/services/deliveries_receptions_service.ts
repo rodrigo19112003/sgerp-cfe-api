@@ -18,6 +18,8 @@ import UserRoles from "../types/enums/user_roles";
 import { IFile } from "../types/interfaces/request_bodies";
 import Category from "../models/Category";
 import User from "../models/User";
+import EvidenceCategories from "../types/enums/evidence_categories";
+import { encodeFilesToBase64 } from "../lib/utils";
 
 async function getAllDeliveriesReceptionsMade(pagination: {
     userId: number;
@@ -571,7 +573,7 @@ async function getDeliveryReceptonById(
 ): Promise<IDeliveryReceptionWithStatusAndWorkers> {
     let deliveryReception: IDeliveryReceptionWithStatusAndWorkers;
     try {
-        const deliveryReceptionInDatabae = await db.DeliveryReception.findByPk(
+        const deliveryReceptionInDatabase = await db.DeliveryReception.findByPk(
             deliveryReceptionId,
             {
                 include: [
@@ -587,19 +589,12 @@ async function getDeliveryReceptonById(
                         ],
                     },
                     {
-                        model: db.DeliveryReceptionReceived,
-                        as: "received",
+                        model: db.Evidence,
+                        as: "evidences",
                         include: [
                             {
-                                model: db.User,
-                                as: "user",
-                                include: [
-                                    {
-                                        model: db.Role,
-                                        as: "roles",
-                                        through: { attributes: [] },
-                                    },
-                                ],
+                                model: db.Category,
+                                as: "category",
                             },
                         ],
                     },
@@ -607,7 +602,7 @@ async function getDeliveryReceptonById(
             }
         );
 
-        if (deliveryReceptionInDatabae === null) {
+        if (deliveryReceptionInDatabase === null) {
             throw new BusinessLogicException(
                 ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
                 CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
@@ -618,8 +613,21 @@ async function getDeliveryReceptonById(
         const deliveriesReceptionsReceived =
             await db.DeliveryReceptionReceived.findAll({
                 where: {
-                    deliveryReceptionId: deliveryReceptionInDatabae.id,
+                    deliveryReceptionId: deliveryReceptionInDatabase.id,
                 },
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        include: [
+                            {
+                                model: db.Role,
+                                as: "roles",
+                                through: { attributes: [] },
+                            },
+                        ],
+                    },
+                ],
             });
 
         const signedCount = deliveriesReceptionsReceived
@@ -648,14 +656,68 @@ async function getDeliveryReceptonById(
             r.user!.roles!.some((role) => role.name === UserRoles.WORKER)
         )!.user!;
 
+        const findEvidence = (categoryName: EvidenceCategories) =>
+            deliveryReceptionInDatabase.evidences!.find(
+                (e) => e.category?.name === categoryName
+            );
+
+        const procedureReportFile: IFile = {
+            name: findEvidence(EvidenceCategories.REPORT)!.name,
+            content: findEvidence(EvidenceCategories.REPORT)!.content as Buffer,
+            category: EvidenceCategories.REPORT,
+        };
+        const financialResourcesFile: IFile = {
+            name: findEvidence(EvidenceCategories.FINANCE)!.name,
+            content: findEvidence(EvidenceCategories.FINANCE)!
+                .content as Buffer,
+            category: EvidenceCategories.FINANCE,
+        };
+        const humanResourcesFile: IFile = {
+            name: findEvidence(EvidenceCategories.HUMAN)!.name,
+            content: findEvidence(EvidenceCategories.HUMAN)!.content as Buffer,
+            category: EvidenceCategories.HUMAN,
+        };
+        const materialResourcesFile: IFile = {
+            name: findEvidence(EvidenceCategories.MATERIAL)!.name,
+            content: findEvidence(EvidenceCategories.MATERIAL)!
+                .content as Buffer,
+            category: EvidenceCategories.MATERIAL,
+        };
+        const areaBudgetStatusFile: IFile = {
+            name: findEvidence(EvidenceCategories.BUDGET)!.name,
+            content: findEvidence(EvidenceCategories.BUDGET)!.content as Buffer,
+            category: EvidenceCategories.BUDGET,
+        };
+        const programmaticStatusFile: IFile = {
+            name: findEvidence(EvidenceCategories.PROGRAMMATIC)!.name,
+            content: findEvidence(EvidenceCategories.PROGRAMMATIC)!
+                .content as Buffer,
+            category: EvidenceCategories.PROGRAMMATIC,
+        };
+
+        encodeFilesToBase64([
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBudgetStatusFile,
+            programmaticStatusFile,
+        ]);
+
         deliveryReception = {
-            ...deliveryReceptionInDatabae.toJSON(),
-            status,
-            fullNameMaker: deliveryReceptionInDatabae.user!.fullName,
+            ...deliveryReceptionInDatabase.toJSON(),
+            procedureReportFile,
+            financialResourcesFile,
+            humanResourcesFile,
+            materialResourcesFile,
+            areaBudgetStatusFile,
+            programmaticStatusFile,
+            fullNameMaker: deliveryReceptionInDatabase.user!.fullName,
             employeeNumberMaker:
-                deliveryReceptionInDatabae.user!.employeeNumber,
+                deliveryReceptionInDatabase.user!.employeeNumber,
             fullNameReceiver: receivingWorker!.fullName,
             employeeNumberReceiver: receivingWorker!.employeeNumber,
+            status,
         };
     } catch (error: any) {
         if (error.isTrusted) {
@@ -816,12 +878,14 @@ async function updateDeliveryReception(deliveryReception: {
     }
 }
 
-async function validateCategoryExists(roleName: string): Promise<Category> {
+async function validateCategoryExists(
+    evidenceCategory: EvidenceCategories
+): Promise<Category> {
     let category: Category;
     try {
         const categoryInDatabse = await db.Category.findOne({
             where: {
-                name: roleName,
+                name: evidenceCategory,
             },
         });
 

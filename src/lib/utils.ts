@@ -9,6 +9,12 @@ function decodeBase64Files(files: IFile[]) {
     }
 }
 
+function encodeFilesToBase64(files: IFile[]) {
+    for (const file of files) {
+        file.content = (file.content as Buffer).toString("base64");
+    }
+}
+
 function generateValidationCode(length = 6): string {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
@@ -326,6 +332,7 @@ async function sendUpdatedDeliveryReceptionEmail(data: {
 
 export {
     decodeBase64Files,
+    encodeFilesToBase64,
     generateValidationCode,
     sendValidationCodeEmail,
     sendUserCredentialsEmail,
