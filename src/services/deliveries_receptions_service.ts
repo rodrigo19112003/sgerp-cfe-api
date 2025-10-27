@@ -463,21 +463,44 @@ async function createDeliveryReception(deliveryReception: {
                 {
                     model: db.DeliveryReceptionReceived,
                     as: "received",
-                    where: { userId: receivingWorker.id },
                 },
             ],
         });
 
         if (deliveryReceptionExists !== null) {
-            const deliveriesReceptionsReceived =
-                await db.DeliveryReceptionReceived.findAll({
-                    where: {
-                        deliveryReceptionId: deliveryReceptionExists.id,
-                    },
-                });
+            const signedCount = deliveryReceptionExists.received
+                ? deliveryReceptionExists.received.filter((g) => g.accepted)
+                      .length
+                : 0;
 
-            const signedCount = deliveriesReceptionsReceived
-                ? deliveriesReceptionsReceived.filter((g) => g.accepted).length
+            if (signedCount !== 3) {
+                throw new BusinessLogicException(
+                    ErrorMessages.DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER,
+                    CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_ALREADY_EXISTS_FOR_WORKER,
+                    HttpStatusCodes.BAD_REQUEST
+                );
+            }
+        }
+
+        const deliveryReceptionExistsForWorker =
+            await db.DeliveryReception.findOne({
+                where: {
+                    userId: makerUserId,
+                },
+                include: [
+                    {
+                        model: db.DeliveryReceptionReceived,
+                        as: "received",
+                        where: { userId: receivingWorker.id },
+                    },
+                ],
+            });
+
+        if (deliveryReceptionExistsForWorker !== null) {
+            const signedCount = deliveryReceptionExistsForWorker.received
+                ? deliveryReceptionExistsForWorker.received.filter(
+                      (g) => g.accepted
+                  ).length
                 : 0;
 
             if (signedCount !== 3) {
