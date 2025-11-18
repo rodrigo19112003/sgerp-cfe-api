@@ -24,7 +24,7 @@ import {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
     getAllDeliveriesReceptionsReleasedController,
-    getCommentsByDeliveryReceptionIdController,
+    getAllCommentsByDeliveryReceptionIdController,
     getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
 } from "../controllers/deliveries_receptions_controller";
@@ -137,7 +137,7 @@ router.get(
     allowRoles([UserRoles.WORKER]),
     checkSchema(getCommentsByDeliveryReceptionIdValidationSchema),
     validateRequestSchemaMiddleware,
-    getCommentsByDeliveryReceptionIdController
+    getAllCommentsByDeliveryReceptionIdController
 );
 
 export default router;

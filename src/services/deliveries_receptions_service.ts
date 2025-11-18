@@ -2,7 +2,7 @@ import { InferAttributes, Op } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import {
-    ICommentWithCategoryName,
+    ICommentWithCategoryNameAndZoneManagerName,
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
 } from "../types/interfaces/response_bodies";
@@ -1022,7 +1022,7 @@ async function createComment(
     deliveryReceptionId: number,
     userId: number,
     text: string,
-    categoryId: number
+    categoryName: EvidenceCategories
 ) {
     try {
         const deliveryReception = await db.DeliveryReception.findByPk(
@@ -1035,7 +1035,9 @@ async function createComment(
                 HttpStatusCodes.NOT_FOUND
             );
         }
-        const category = await db.Category.findByPk(categoryId);
+        const category = await db.Category.findOne({
+            where: { name: categoryName },
+        });
         if (category === null) {
             throw new BusinessLogicException(
                 ErrorMessages.CATEGORY_NOT_FOUND,
@@ -1047,7 +1049,7 @@ async function createComment(
             deliveryReceptionId,
             userId,
             text,
-            categoryId,
+            categoryId: category.id,
         });
     } catch (error: any) {
         if (error.isTrusted) {
@@ -1074,30 +1076,25 @@ async function getCategoryNameById(categoryId: number): Promise<string> {
 
 async function getAllCommentsByDeliveryReceptionId(
     deliveryReceptionId: number
-): Promise<ICommentWithCategoryName[]> {
+): Promise<ICommentWithCategoryNameAndZoneManagerName[]> {
     try {
         const comments = await db.Comment.findAll({
             where: { deliveryReceptionId },
+            include: [
+                { model: db.User, as: "user" },
+                { model: db.Category, as: "category" },
+            ],
+            order: [["categoryId", "ASC"]],
         });
 
-        const commentsWithCategoryName: ICommentWithCategoryName[] = [];
-
-        for (const comment of comments) {
-            const categoryName = await getCategoryNameById(comment.categoryId);
-
-            commentsWithCategoryName.push({
-                ...comment.toJSON(),
-                categoryName,
-            });
-        }
-
-        return commentsWithCategoryName;
+        return comments.map((c) => ({
+            ...c.toJSON(),
+            categoryName: c.category!.name,
+            zoneManagerName: c.user!.fullName,
+        }));
     } catch (error: any) {
-        if (error.isTrusted) {
-            throw error;
-        } else {
-            throw new SQLException(error);
-        }
+        if (error.isTrusted) throw error;
+        throw new SQLException(error);
     }
 }
 

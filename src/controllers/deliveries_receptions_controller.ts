@@ -416,16 +416,15 @@ async function createCommentController(
     try {
         const { id } = req.user;
         const { deliveryReceptionId } = req.params;
-        const { text, categoryId } = req.body;
+        const { text, categoryName } = req.body;
 
-        await createComment(deliveryReceptionId!, id!, text!, categoryId!);
+        await createComment(deliveryReceptionId!, id!, text!, categoryName!);
 
         const zoneManagerEmployeeNumberAndName =
             await getZoneManagerEmployeeNumberAndNameById(id!);
         const sendingWorkerEmail = await getSendingWorkerEmail(
             deliveryReceptionId!
         );
-        const categoryName = await getCategoryNameById(categoryId!);
         const users =
             await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
                 deliveryReceptionId!
@@ -448,7 +447,7 @@ async function createCommentController(
     }
 }
 
-async function getCommentsByDeliveryReceptionIdController(
+async function getAllCommentsByDeliveryReceptionIdController(
     req: Request<IDeliveryReceptionByIdParams, {}, {}, {}>,
     res: Response,
     next: NextFunction
@@ -478,5 +477,5 @@ export {
     updateteDeliveryReceptionController,
     acceptDeliveryReceptionController,
     createCommentController,
-    getCommentsByDeliveryReceptionIdController,
+    getAllCommentsByDeliveryReceptionIdController,
 };

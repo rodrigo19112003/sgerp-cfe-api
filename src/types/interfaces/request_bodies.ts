@@ -55,7 +55,7 @@ interface ICreateOrUpdateDeliveryReceptionBody {
 
 interface ICreateCommentBody {
     text?: string;
-    categoryId?: number;
+    categoryName: EvidenceCategories;
 }
 
 export {

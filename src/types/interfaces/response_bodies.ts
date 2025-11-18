@@ -43,8 +43,10 @@ interface IDeliveryReceptionWithStatusAndWorkers
     status: DeliveryReceptionStatusCodes;
 }
 
-interface ICommentWithCategoryName extends InferAttributes<Comment> {
+interface ICommentWithCategoryNameAndZoneManagerName
+    extends InferAttributes<Comment> {
     categoryName: string;
+    zoneManagerName: string;
 }
 
 export {
@@ -52,5 +54,5 @@ export {
     IUserWithRoles,
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
-    ICommentWithCategoryName,
+    ICommentWithCategoryNameAndZoneManagerName,
 };
