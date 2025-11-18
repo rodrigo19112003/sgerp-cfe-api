@@ -53,6 +53,11 @@ interface ICreateOrUpdateDeliveryReceptionBody {
     employeeNumberReceiver?: string;
 }
 
+interface ICreateCommentBody {
+    text?: string;
+    categoryId?: number;
+}
+
 export {
     ILoginBody,
     ISendingCodeToChangePasswordBody,
@@ -61,4 +66,5 @@ export {
     ICreateOrUpdateUserBody,
     ICreateOrUpdateDeliveryReceptionBody,
     IFile,
+    ICreateCommentBody,
 };

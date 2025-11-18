@@ -5,6 +5,7 @@ import DeliveryReceptionStatusCodes from "../enums/delivery_reception_status_cod
 import DeliveryReceptionReceived from "../../models/DeliveryReceptionReceived";
 import DeliveryReception from "../../models/DeliveryReception";
 import { IFile } from "./request_bodies";
+import Comment from "../../models/Comment";
 
 interface IErrorMessageWithCode {
     details: string;
@@ -42,9 +43,14 @@ interface IDeliveryReceptionWithStatusAndWorkers
     status: DeliveryReceptionStatusCodes;
 }
 
+interface ICommentWithCategoryName extends InferAttributes<Comment> {
+    categoryName: string;
+}
+
 export {
     IErrorMessageWithCode,
     IUserWithRoles,
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
+    ICommentWithCategoryName,
 };

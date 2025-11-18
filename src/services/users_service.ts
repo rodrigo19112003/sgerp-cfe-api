@@ -546,6 +546,41 @@ async function getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
     }
 }
 
+async function getZoneManagerEmployeeNumberAndNameById(
+    userId: number
+): Promise<string> {
+    try {
+        const user = await db.User.findByPk(userId);
+        return user!.employeeNumber + " - " + user!.fullName;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function getSendingWorkerEmail(
+    deliveryReceptionId: number
+): Promise<string> {
+    try {
+        const deliveryReception = await db.DeliveryReception.findByPk(
+            deliveryReceptionId,
+            {
+                include: [{ model: db.User, as: "user" }],
+            }
+        );
+        return deliveryReception!.user!.email;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
 async function getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
     deliveryReceptionId: number
 ): Promise<string[]> {
@@ -606,5 +641,7 @@ export {
     getValidationCodeByEmail,
     updatePasswordByEmail,
     getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId,
+    getZoneManagerEmployeeNumberAndNameById,
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
+    getSendingWorkerEmail,
 };

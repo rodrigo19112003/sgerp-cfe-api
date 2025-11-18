@@ -330,6 +330,54 @@ async function sendUpdatedDeliveryReceptionEmail(data: {
     });
 }
 
+async function sendCreatedCommentEmail(data: {
+    zoneManagerEmployeeNumberAndName: string;
+    sendingWorkerEmail: string;
+    categoryName: string;
+    sendingWorker: string;
+    receivingWorker: string;
+}) {
+    const {
+        zoneManagerEmployeeNumberAndName,
+        sendingWorkerEmail,
+        categoryName,
+        sendingWorker,
+        receivingWorker,
+    } = data;
+
+    await transporter.sendMail({
+        from: `"Soporte SGERP" <no-reply@sgerp.com>`,
+        to: sendingWorkerEmail,
+        subject:
+            "Notificación de nuevo comentario en entrega-recepción de puesto en el Sistema SGERP",
+        text: `Estimado usuario,
+        Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha agregado un nuevo comentario de categoría "${categoryName}" a la entrega-recepción entre los siguientes trabajadores en el Sistema de Gestión de Entrega Recepción de Puestos:
+
+        Trabajador que entrega: ${sendingWorker}
+        Trabajador que recibe: ${receivingWorker}`,
+        html: `
+      <div style="text-align: center; font-family: Arial, sans-serif; color: #333;">
+        <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
+        <p>Estimado(a) usuario(a),</p>
+        <p>Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha agregado un nuevo comentario de categoría "<strong>${categoryName}</strong>" a la entrega-recepción entre los siguientes trabajadores en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong>:</p>
+        <p style="text-align: left; display: inline-block; margin-top: 10px;">
+          • <strong>Trabajador que entrega:</strong> ${sendingWorker}<br>
+          • <strong>Trabajador que recibe:</strong> ${receivingWorker}
+        </p>
+        <br>
+        <p>Atentamente,<br><strong>Equipo de Soporte SGERP</strong></p>
+      </div>
+    `,
+        attachments: [
+            {
+                filename: "sgerp-logo.png",
+                path: path.join(__dirname, "../assets/sgerp-logo.png"),
+                cid: "logo",
+            },
+        ],
+    });
+}
+
 export {
     decodeBase64Files,
     encodeFilesToBase64,
@@ -341,4 +389,5 @@ export {
     sendDeletedDeliveryReceptionEmail,
     sendCreatedDeliveryReceptionEmail,
     sendUpdatedDeliveryReceptionEmail,
+    sendCreatedCommentEmail,
 };

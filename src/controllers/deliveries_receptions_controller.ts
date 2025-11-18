@@ -1,10 +1,14 @@
 import e, { NextFunction, Request, Response } from "express";
 import { HttpStatusCodes } from "../types/enums/http";
 import {
+    acceptDeliveryReception,
+    createComment,
     createDeliveryReception,
     deleteDeliveryReceptionById,
+    getAllCommentsByDeliveryReceptionId,
     getAllDeliveriesReceptionsMade,
     getAllDeliveriesReceptionsReceived,
+    getCategoryNameById,
     getDeliveryReceptonById,
     updateDeliveryReception,
 } from "../services/deliveries_receptions_service";
@@ -15,16 +19,22 @@ import {
 import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
 import {
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
+    getSendingWorkerEmail,
+    getZoneManagerEmployeeNumberAndNameById,
     getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId,
 } from "../services/users_service";
 import {
     decodeBase64Files,
+    sendCreatedCommentEmail,
     sendCreatedDeliveryReceptionEmail,
     sendDeletedDeliveryReceptionEmail,
     sendUpdatedDeliveryReceptionEmail,
 } from "../lib/utils";
 import DeliveryReceptionStatusCodes from "../types/enums/delivery_reception_status_codes";
-import { ICreateOrUpdateDeliveryReceptionBody } from "../types/interfaces/request_bodies";
+import {
+    ICreateCommentBody,
+    ICreateOrUpdateDeliveryReceptionBody,
+} from "../types/interfaces/request_bodies";
 
 async function getAllDeliveriesReceptionsMadeController(
     req: Request,
@@ -94,11 +104,12 @@ async function getAllDeliveriesReceptionsReceivedController(
     next: NextFunction
 ) {
     try {
-        const { id } = req.user;
+        const { id, userRoles } = req.user;
         const { limit, offset, query } = (req as any).validatedQuery;
 
         const deliveriesReceptions = await getAllDeliveriesReceptionsReceived({
             userId: id,
+            userRoles,
             limit,
             offset,
             query,
@@ -380,6 +391,81 @@ async function updateteDeliveryReceptionController(
     }
 }
 
+async function acceptDeliveryReceptionController(
+    req: Request<IDeliveryReceptionByIdParams, {}, {}, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { deliveryReceptionId } = req.params;
+
+        await acceptDeliveryReception(deliveryReceptionId!, id!);
+
+        res.sendStatus(HttpStatusCodes.OK);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function createCommentController(
+    req: Request<IDeliveryReceptionByIdParams, {}, ICreateCommentBody, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { id } = req.user;
+        const { deliveryReceptionId } = req.params;
+        const { text, categoryId } = req.body;
+
+        await createComment(deliveryReceptionId!, id!, text!, categoryId!);
+
+        const zoneManagerEmployeeNumberAndName =
+            await getZoneManagerEmployeeNumberAndNameById(id!);
+        const sendingWorkerEmail = await getSendingWorkerEmail(
+            deliveryReceptionId!
+        );
+        const categoryName = await getCategoryNameById(categoryId!);
+        const users =
+            await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+        const sendingWorker = users[0];
+        const receivingWorker = users[1];
+        setImmediate(() => {
+            sendCreatedCommentEmail({
+                zoneManagerEmployeeNumberAndName,
+                sendingWorkerEmail,
+                categoryName,
+                sendingWorker,
+                receivingWorker,
+            }).catch(() => {});
+        });
+
+        res.sendStatus(HttpStatusCodes.CREATED);
+    } catch (error) {
+        next(error);
+    }
+}
+
+async function getCommentsByDeliveryReceptionIdController(
+    req: Request<IDeliveryReceptionByIdParams, {}, {}, {}>,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const { deliveryReceptionId } = req.params;
+
+        const comments = await getAllCommentsByDeliveryReceptionId(
+            deliveryReceptionId!
+        );
+
+        res.status(HttpStatusCodes.OK).json(comments);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export {
     getAllDeliveriesReceptionsMadeController,
     deleteDeliveryReceptionController,
@@ -390,4 +476,7 @@ export {
     createDeliveryReceptionController,
     getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
+    acceptDeliveryReceptionController,
+    createCommentController,
+    getCommentsByDeliveryReceptionIdController,
 };

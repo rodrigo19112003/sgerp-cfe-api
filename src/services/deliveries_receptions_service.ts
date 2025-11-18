@@ -2,6 +2,7 @@ import { InferAttributes, Op } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import {
+    ICommentWithCategoryName,
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
 } from "../types/interfaces/response_bodies";
@@ -338,14 +339,26 @@ async function getAllDeliveriesReceptionsReceived(pagination: {
 
             let status: DeliveryReceptionStatusCodes;
             if (signedCount === 0) {
-                status = DeliveryReceptionStatusCodes.PENDING;
+                status =
+                    userRoles && userRoles.includes(UserRoles.WORKER)
+                        ? DeliveryReceptionStatusCodes.IN_PROCESS
+                        : DeliveryReceptionStatusCodes.PENDING;
             } else if (signedCount === 3) {
                 status = DeliveryReceptionStatusCodes.RELEASED;
             } else {
-                status = DeliveryReceptionStatusCodes.IN_PROCESS;
+                status =
+                    userRoles &&
+                    userRoles.includes(UserRoles.WORKER) &&
+                    signedCount === 2
+                        ? DeliveryReceptionStatusCodes.PENDING
+                        : DeliveryReceptionStatusCodes.IN_PROCESS;
             }
 
-            if (userRoles && userRoles.includes(UserRoles.WITNESS)) {
+            if (
+                userRoles &&
+                userRoles.includes(UserRoles.WITNESS) &&
+                signedCount < 3
+            ) {
                 const userSignature = allSignatures.find(
                     (g) => g.userId === userId && g.accepted
                 );
@@ -690,14 +703,19 @@ async function getDeliveryReceptonById(
 
         let status: DeliveryReceptionStatusCodes;
         if (signedCount === 0) {
-            status = DeliveryReceptionStatusCodes.PENDING;
+            status = userRoles.includes(UserRoles.WORKER)
+                ? DeliveryReceptionStatusCodes.IN_PROCESS
+                : DeliveryReceptionStatusCodes.PENDING;
         } else if (signedCount === 3) {
             status = DeliveryReceptionStatusCodes.RELEASED;
         } else {
-            status = DeliveryReceptionStatusCodes.IN_PROCESS;
+            status =
+                userRoles.includes(UserRoles.WORKER) && signedCount === 2
+                    ? DeliveryReceptionStatusCodes.PENDING
+                    : DeliveryReceptionStatusCodes.IN_PROCESS;
         }
 
-        if (userRoles.includes(UserRoles.WITNESS)) {
+        if (userRoles.includes(UserRoles.WITNESS) && signedCount < 3) {
             const userSignature = deliveriesReceptionsReceived.find(
                 (g) => g.userId === userId && g.accepted
             );
@@ -963,6 +981,126 @@ async function validateCategoryExists(
     return category;
 }
 
+async function acceptDeliveryReception(
+    deliveryReceptionId: number,
+    userId: number
+) {
+    try {
+        const deliveryReceptionReceived =
+            await db.DeliveryReceptionReceived.findOne({
+                where: {
+                    deliveryReceptionId,
+                    userId,
+                },
+            });
+        if (deliveryReceptionReceived === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+        await db.DeliveryReceptionReceived.update(
+            { accepted: true },
+            {
+                where: {
+                    deliveryReceptionId,
+                    userId,
+                },
+            }
+        );
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function createComment(
+    deliveryReceptionId: number,
+    userId: number,
+    text: string,
+    categoryId: number
+) {
+    try {
+        const deliveryReception = await db.DeliveryReception.findByPk(
+            deliveryReceptionId
+        );
+        if (deliveryReception === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+        const category = await db.Category.findByPk(categoryId);
+        if (category === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.CATEGORY_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.CATEGORY_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+        await db.Comment.create({
+            deliveryReceptionId,
+            userId,
+            text,
+            categoryId,
+        });
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function getCategoryNameById(categoryId: number): Promise<string> {
+    try {
+        const category = await db.Category.findByPk(categoryId);
+
+        return category!.name;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
+async function getAllCommentsByDeliveryReceptionId(
+    deliveryReceptionId: number
+): Promise<ICommentWithCategoryName[]> {
+    try {
+        const comments = await db.Comment.findAll({
+            where: { deliveryReceptionId },
+        });
+
+        const commentsWithCategoryName: ICommentWithCategoryName[] = [];
+
+        for (const comment of comments) {
+            const categoryName = await getCategoryNameById(comment.categoryId);
+
+            commentsWithCategoryName.push({
+                ...comment.toJSON(),
+                categoryName,
+            });
+        }
+
+        return commentsWithCategoryName;
+    } catch (error: any) {
+        if (error.isTrusted) {
+            throw error;
+        } else {
+            throw new SQLException(error);
+        }
+    }
+}
+
 export {
     getAllDeliveriesReceptionsMade,
     deleteDeliveryReceptionById,
@@ -970,4 +1108,8 @@ export {
     createDeliveryReception,
     getDeliveryReceptonById,
     updateDeliveryReception,
+    acceptDeliveryReception,
+    createComment,
+    getCategoryNameById,
+    getAllCommentsByDeliveryReceptionId,
 };

@@ -426,10 +426,46 @@ const getDeliveryReceptionByIdValidationSchema: Schema = {
     },
 };
 
+const acceptDeliveryReceptionValidationSchema: Schema = {
+    deliveryReceptionId: {
+        in: ["params"],
+        isInt: { errorMessage: "deliveryReceptionId must be a number" },
+        toInt: true,
+        notEmpty: { errorMessage: "deliveryReceptionId is required" },
+    },
+};
+
+const createCommentValidationSchema: Schema = {
+    deliveryReceptionId: {
+        in: ["params"],
+        isInt: { errorMessage: "deliveryReceptionId must be a number" },
+        toInt: true,
+        notEmpty: { errorMessage: "deliveryReceptionId is required" },
+    },
+    text: {
+        in: ["body"],
+        isString: { errorMessage: "text must be a string" },
+        notEmpty: { errorMessage: "text is required" },
+        trim: true,
+    },
+};
+
+const getCommentsByDeliveryReceptionIdValidationSchema: Schema = {
+    deliveryReceptionId: {
+        in: ["params"],
+        isInt: { errorMessage: "deliveryReceptionId must be a number" },
+        toInt: true,
+        notEmpty: { errorMessage: "deliveryReceptionId is required" },
+    },
+};
+
 export {
     getAllDeliveriesReceptionsValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     createDeliveryReceptionValidationSchema,
     updateDeliveryReceptionValidationSchema,
     getDeliveryReceptionByIdValidationSchema,
+    acceptDeliveryReceptionValidationSchema,
+    createCommentValidationSchema,
+    getCommentsByDeliveryReceptionIdValidationSchema,
 };

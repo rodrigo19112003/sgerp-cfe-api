@@ -3,15 +3,20 @@ import { allowRoles, checkTokenValidity } from "../middlewares/access_control";
 import UserRoles from "../types/enums/user_roles";
 import { checkSchema } from "express-validator";
 import {
+    acceptDeliveryReceptionValidationSchema,
+    createCommentValidationSchema,
     createDeliveryReceptionValidationSchema,
     deleteDeliveryReceptionValidationSchema,
     getAllDeliveriesReceptionsValidationSchema,
+    getCommentsByDeliveryReceptionIdValidationSchema,
     getDeliveryReceptionByIdValidationSchema,
     updateDeliveryReceptionValidationSchema,
 } from "../validation_schemas/delivery_reception";
 import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
+    acceptDeliveryReceptionController,
+    createCommentController,
     createDeliveryReceptionController,
     deleteDeliveryReceptionController,
     getAllDeliveriesReceptionsInProcessController,
@@ -19,6 +24,7 @@ import {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
     getAllDeliveriesReceptionsReleasedController,
+    getCommentsByDeliveryReceptionIdController,
     getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
 } from "../controllers/deliveries_receptions_controller";
@@ -105,6 +111,33 @@ router.put(
     checkSchema(updateDeliveryReceptionValidationSchema),
     validateRequestSchemaMiddleware,
     updateteDeliveryReceptionController
+);
+
+router.patch(
+    "/:deliveryReceptionId/accept",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER, UserRoles.WITNESS]),
+    checkSchema(acceptDeliveryReceptionValidationSchema),
+    validateRequestSchemaMiddleware,
+    acceptDeliveryReceptionController
+);
+
+router.post(
+    "/:deliveryReceptionId/comments",
+    checkTokenValidity,
+    allowRoles([UserRoles.ZONE_MANAGER]),
+    checkSchema(createCommentValidationSchema),
+    validateRequestSchemaMiddleware,
+    createCommentController
+);
+
+router.get(
+    "/:deliveryReceptionId/comments",
+    checkTokenValidity,
+    allowRoles([UserRoles.WORKER]),
+    checkSchema(getCommentsByDeliveryReceptionIdValidationSchema),
+    validateRequestSchemaMiddleware,
+    getCommentsByDeliveryReceptionIdController
 );
 
 export default router;
