@@ -703,14 +703,18 @@ async function getDeliveryReceptonById(
 
         let status: DeliveryReceptionStatusCodes;
         if (signedCount === 0) {
-            status = userRoles.includes(UserRoles.WORKER)
-                ? DeliveryReceptionStatusCodes.IN_PROCESS
-                : DeliveryReceptionStatusCodes.PENDING;
+            status =
+                userRoles.includes(UserRoles.WORKER) &&
+                userId !== deliveryReceptionInDatabase.userId
+                    ? DeliveryReceptionStatusCodes.IN_PROCESS
+                    : DeliveryReceptionStatusCodes.PENDING;
         } else if (signedCount === 3) {
             status = DeliveryReceptionStatusCodes.RELEASED;
         } else {
             status =
-                userRoles.includes(UserRoles.WORKER) && signedCount === 2
+                userRoles.includes(UserRoles.WORKER) &&
+                userId !== deliveryReceptionInDatabase.userId &&
+                signedCount === 2
                     ? DeliveryReceptionStatusCodes.PENDING
                     : DeliveryReceptionStatusCodes.IN_PROCESS;
         }
@@ -1074,23 +1078,42 @@ async function getCategoryNameById(categoryId: number): Promise<string> {
     }
 }
 
-async function getAllCommentsByDeliveryReceptionId(
-    deliveryReceptionId: number
+async function getAllCommentsByDeliveryReceptionIdAndCategory(
+    deliveryReceptionId: number,
+    categoryName: EvidenceCategories
 ): Promise<ICommentWithCategoryNameAndZoneManagerName[]> {
     try {
+        const deliveryReception = await db.DeliveryReception.findByPk(
+            deliveryReceptionId
+        );
+        if (deliveryReception === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.DELIVERY_RECEPTION_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
+        const category = await db.Category.findOne({
+            where: { name: categoryName },
+        });
+        if (category === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.CATEGORY_NOT_FOUND,
+                CreateOrUpdateDeliveryReceptionErrorCodes.CATEGORY_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
+
         const comments = await db.Comment.findAll({
-            where: { deliveryReceptionId },
-            include: [
-                { model: db.User, as: "user" },
-                { model: db.Category, as: "category" },
-            ],
-            order: [["categoryId", "ASC"]],
+            where: { deliveryReceptionId, categoryId: category.id },
+            include: [{ model: db.User, as: "user" }],
         });
 
-        return comments.map((c) => ({
-            ...c.toJSON(),
-            categoryName: c.category!.name,
-            zoneManagerName: c.user!.fullName,
+        return comments.map((comment) => ({
+            ...comment.toJSON(),
+            zoneManagerEmployeeNumberAndFullName:
+                comment.user!.employeeNumber + " - " + comment.user!.fullName,
         }));
     } catch (error: any) {
         if (error.isTrusted) throw error;
@@ -1108,5 +1131,5 @@ export {
     acceptDeliveryReception,
     createComment,
     getCategoryNameById,
-    getAllCommentsByDeliveryReceptionId,
+    getAllCommentsByDeliveryReceptionIdAndCategory,
 };

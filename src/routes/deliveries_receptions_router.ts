@@ -24,9 +24,9 @@ import {
     getAllDeliveriesReceptionsPendingController,
     getAllDeliveriesReceptionsReceivedController,
     getAllDeliveriesReceptionsReleasedController,
-    getAllCommentsByDeliveryReceptionIdController,
     getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
+    getAllCommentsByDeliveryReceptionIdAndCategoryController,
 } from "../controllers/deliveries_receptions_controller";
 
 const router = Router();
@@ -132,12 +132,12 @@ router.post(
 );
 
 router.get(
-    "/:deliveryReceptionId/comments",
+    "/:deliveryReceptionId/comments/:category",
     checkTokenValidity,
     allowRoles([UserRoles.WORKER]),
     checkSchema(getCommentsByDeliveryReceptionIdValidationSchema),
     validateRequestSchemaMiddleware,
-    getAllCommentsByDeliveryReceptionIdController
+    getAllCommentsByDeliveryReceptionIdAndCategoryController
 );
 
 export default router;

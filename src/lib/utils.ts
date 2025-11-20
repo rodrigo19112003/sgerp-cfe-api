@@ -330,6 +330,51 @@ async function sendUpdatedDeliveryReceptionEmail(data: {
     });
 }
 
+async function sendAcceptedDeliveryReceptionEmail(data: {
+    zoneManagerEmployeeNumberAndName: string;
+    sendingWorker: string;
+    receivingWorker: string;
+    email: string;
+}) {
+    const {
+        zoneManagerEmployeeNumberAndName,
+        sendingWorker,
+        receivingWorker,
+        email,
+    } = data;
+    await transporter.sendMail({
+        from: `"Soporte SGERP" <no-reply@sgerp.com>`,
+        to: email,
+        subject:
+            "Notificación de aceptación de entrega-recepción de puesto en el Sistema SGERP",
+        text: `Estimado usuario,
+        Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el Sistema de Gestión de Entrega Recepción de Puestos:
+
+        Trabajador que entrega: ${sendingWorker}
+        Trabajador que recibe: ${receivingWorker}`,
+        html: `
+      <div style="text-align: center; font-family: Arial, sans-serif; color: #333;">
+        <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
+        <p>Estimado(a) usuario(a),</p>
+        <p>Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong>:</p>
+        <p style="text-align: left; display: inline-block; margin-top: 10px;">
+          • <strong>Trabajador que entrega:</strong> ${sendingWorker}<br>
+          • <strong>Trabajador que recibe:</strong> ${receivingWorker}
+        </p>
+        <br>
+        <p>Atentamente,<br><strong>Equipo de Soporte SGERP</strong></p>
+      </div>
+    `,
+        attachments: [
+            {
+                filename: "sgerp-logo.png",
+                path: path.join(__dirname, "../assets/sgerp-logo.png"),
+                cid: "logo",
+            },
+        ],
+    });
+}
+
 async function sendCreatedCommentEmail(data: {
     zoneManagerEmployeeNumberAndName: string;
     sendingWorkerEmail: string;
@@ -389,5 +434,6 @@ export {
     sendDeletedDeliveryReceptionEmail,
     sendCreatedDeliveryReceptionEmail,
     sendUpdatedDeliveryReceptionEmail,
+    sendAcceptedDeliveryReceptionEmail,
     sendCreatedCommentEmail,
 };

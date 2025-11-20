@@ -45,8 +45,7 @@ interface IDeliveryReceptionWithStatusAndWorkers
 
 interface ICommentWithCategoryNameAndZoneManagerName
     extends InferAttributes<Comment> {
-    categoryName: string;
-    zoneManagerName: string;
+    zoneManagerEmployeeNumberAndFullName: string;
 }
 
 export {

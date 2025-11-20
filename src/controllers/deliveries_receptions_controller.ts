@@ -5,18 +5,21 @@ import {
     createComment,
     createDeliveryReception,
     deleteDeliveryReceptionById,
-    getAllCommentsByDeliveryReceptionId,
+    getAllCommentsByDeliveryReceptionIdAndCategory,
     getAllDeliveriesReceptionsMade,
     getAllDeliveriesReceptionsReceived,
-    getCategoryNameById,
     getDeliveryReceptonById,
     updateDeliveryReception,
 } from "../services/deliveries_receptions_service";
 import {
+    ICommentWithCategoryNameAndZoneManagerName,
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
 } from "../types/interfaces/response_bodies";
-import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
+import {
+    ICommentsByDeliveryReceptionIdAndCategoryParams,
+    IDeliveryReceptionByIdParams,
+} from "../types/interfaces/request_parameters";
 import {
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
     getSendingWorkerEmail,
@@ -25,6 +28,7 @@ import {
 } from "../services/users_service";
 import {
     decodeBase64Files,
+    sendAcceptedDeliveryReceptionEmail,
     sendCreatedCommentEmail,
     sendCreatedDeliveryReceptionEmail,
     sendDeletedDeliveryReceptionEmail,
@@ -402,6 +406,40 @@ async function acceptDeliveryReceptionController(
 
         await acceptDeliveryReception(deliveryReceptionId!, id!);
 
+        const zoneManagerEmployeeNumberAndName =
+            await getZoneManagerEmployeeNumberAndNameById(id!);
+
+        const emails =
+            await getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
+                deliveryReceptionId!,
+                id
+            );
+
+        const users =
+            await getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
+                deliveryReceptionId!
+            );
+
+        const sendingWorkerEmail = await getSendingWorkerEmail(
+            deliveryReceptionId!
+        );
+
+        const sendingWorker = users[0];
+        const receivingWorker = users[1];
+
+        emails.push(sendingWorkerEmail!);
+
+        for (const email of emails) {
+            setImmediate(() => {
+                sendAcceptedDeliveryReceptionEmail({
+                    zoneManagerEmployeeNumberAndName,
+                    sendingWorker,
+                    receivingWorker,
+                    email,
+                }).catch(() => {});
+            });
+        }
+
         res.sendStatus(HttpStatusCodes.OK);
     } catch (error) {
         next(error);
@@ -447,16 +485,17 @@ async function createCommentController(
     }
 }
 
-async function getAllCommentsByDeliveryReceptionIdController(
-    req: Request<IDeliveryReceptionByIdParams, {}, {}, {}>,
-    res: Response,
+async function getAllCommentsByDeliveryReceptionIdAndCategoryController(
+    req: Request<ICommentsByDeliveryReceptionIdAndCategoryParams, {}, {}, {}>,
+    res: Response<ICommentWithCategoryNameAndZoneManagerName[]>,
     next: NextFunction
 ) {
     try {
-        const { deliveryReceptionId } = req.params;
+        const { deliveryReceptionId, category } = req.params;
 
-        const comments = await getAllCommentsByDeliveryReceptionId(
-            deliveryReceptionId!
+        const comments = await getAllCommentsByDeliveryReceptionIdAndCategory(
+            deliveryReceptionId!,
+            category!
         );
 
         res.status(HttpStatusCodes.OK).json(comments);
@@ -477,5 +516,5 @@ export {
     updateteDeliveryReceptionController,
     acceptDeliveryReceptionController,
     createCommentController,
-    getAllCommentsByDeliveryReceptionIdController,
+    getAllCommentsByDeliveryReceptionIdAndCategoryController,
 };

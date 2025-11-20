@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import db from "../models";
 import SQLException from "../exceptions/services/SQL_Exception";
 import { IUserWithRoles } from "../types/interfaces/response_bodies";
@@ -526,13 +526,20 @@ async function updatePasswordByEmail(
 }
 
 async function getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
-    deliveryReceptionId: number
+    deliveryReceptionId: number,
+    userId?: number
 ): Promise<string[]> {
     try {
         const deliveriesReceptions = await db.DeliveryReceptionReceived.findAll(
             {
                 where: { deliveryReceptionId },
-                include: [{ model: db.User, as: "user" }],
+                include: [
+                    {
+                        model: db.User,
+                        as: "user",
+                        where: userId ? { id: { [Op.ne]: userId } } : {},
+                    },
+                ],
             }
         );
 

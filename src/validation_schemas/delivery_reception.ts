@@ -457,6 +457,12 @@ const getCommentsByDeliveryReceptionIdValidationSchema: Schema = {
         toInt: true,
         notEmpty: { errorMessage: "deliveryReceptionId is required" },
     },
+    category: {
+        in: ["params"],
+        isString: { errorMessage: "category must be a string" },
+        notEmpty: { errorMessage: "category is required" },
+        trim: true,
+    },
 };
 
 export {
