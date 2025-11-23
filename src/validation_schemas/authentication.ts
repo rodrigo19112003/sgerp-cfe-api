@@ -85,6 +85,22 @@ const changePasswordSchema: Schema = {
                 "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character (!$%&_¿?)",
         },
     },
+    code: {
+        in: ["body"],
+        trim: true,
+        notEmpty: {
+            errorMessage: "Code is required",
+        },
+        isLength: {
+            options: { min: 6, max: 6 },
+            errorMessage: "Code must be exactly 6 characters",
+        },
+        matches: {
+            options: /^[A-Z0-9]{6}$/,
+            errorMessage:
+                "Code must contain only uppercase letters and numbers (e.g. A1B2C3)",
+        },
+    },
 };
 
 export {

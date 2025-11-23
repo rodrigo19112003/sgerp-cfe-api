@@ -59,7 +59,9 @@ async function verifyValidationCodeController(
 
         if (!validateCode) {
             throw new BusinessLogicException(
-                ErrorMessages.INVALID_VALIDATION_CODE
+                ErrorMessages.INVALID_VALIDATION_CODE,
+                undefined,
+                HttpStatusCodes.UNAUTHORIZED
             );
         }
 
@@ -86,7 +88,9 @@ async function updatePasswordController(
 
         if (!validateCode) {
             throw new BusinessLogicException(
-                ErrorMessages.INVALID_VALIDATION_CODE
+                ErrorMessages.INVALID_VALIDATION_CODE,
+                undefined,
+                HttpStatusCodes.UNAUTHORIZED
             );
         }
 

@@ -434,7 +434,9 @@ async function createValidationCode(
 
         if (user === null) {
             throw new BusinessLogicException(
-                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 
@@ -479,7 +481,9 @@ async function getValidationCodeByEmail(email: string): Promise<string> {
 
         if (user === null) {
             throw new BusinessLogicException(
-                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 
@@ -493,7 +497,9 @@ async function getValidationCodeByEmail(email: string): Promise<string> {
 
         if (code === null) {
             throw new BusinessLogicException(
-                ErrorMessages.VALIDATION_CODE_DOES_NOT_EXISTS
+                ErrorMessages.VALIDATION_CODE_DOES_NOT_EXISTS,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 
@@ -522,7 +528,9 @@ async function updatePasswordByEmail(
 
         if (user === null) {
             throw new BusinessLogicException(
-                ErrorMessages.EMAIL_DOES_NOT_EXISTS
+                ErrorMessages.EMAIL_DOES_NOT_EXISTS,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 

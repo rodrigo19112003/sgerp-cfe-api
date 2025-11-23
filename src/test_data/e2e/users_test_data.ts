@@ -192,7 +192,6 @@ async function insertE2EGetUserByEmployeeNumberTestData() {
     return { adminUser, workerUser };
 }
 
-//Insertar datos de prueba para pruebas E2E para actualizar un usuario, agrega un administrador y un trabajador extra para que ese intente actualizar a otro usuario
 async function insertE2EUpdateUserTestData() {
     const adminUser = await db.User.create({
         employeeNumber: "111AA",
