@@ -59,7 +59,7 @@ async function deleteUserController(
             }).catch(() => {});
         });
 
-        res.sendStatus(HttpStatusCodes.CREATED);
+        res.sendStatus(HttpStatusCodes.NO_CONTENT);
     } catch (error) {
         next(error);
     }
@@ -139,7 +139,7 @@ async function updateUserController(
             }).catch(() => {});
         });
 
-        res.sendStatus(HttpStatusCodes.CREATED);
+        res.sendStatus(HttpStatusCodes.OK);
     } catch (error) {
         next(error);
     }

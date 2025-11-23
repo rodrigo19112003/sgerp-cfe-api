@@ -12,6 +12,7 @@ import {
     DeleteUserErrorCodes,
 } from "../types/enums/error_codes";
 import Role from "../models/Role";
+import { HttpStatusCodes } from "../types/enums/http";
 
 async function getUserByEmployeeNumber(
     employeeNumber: string,
@@ -34,10 +35,16 @@ async function getUserByEmployeeNumber(
         if (user === null) {
             if (isLogin) {
                 throw new BusinessLogicException(
-                    ErrorMessages.INVALID_CREDENTIALS
+                    ErrorMessages.INVALID_CREDENTIALS,
+                    undefined,
+                    HttpStatusCodes.BAD_REQUEST
                 );
             } else {
-                throw new BusinessLogicException(ErrorMessages.USER_NOT_FOUND);
+                throw new BusinessLogicException(
+                    ErrorMessages.USER_NOT_FOUND,
+                    undefined,
+                    HttpStatusCodes.NOT_FOUND
+                );
             }
         }
 
@@ -75,7 +82,11 @@ async function getUserById(id: number): Promise<IUserWithRoles> {
         });
 
         if (user === null) {
-            throw new BusinessLogicException(ErrorMessages.USER_NOT_FOUND);
+            throw new BusinessLogicException(
+                ErrorMessages.USER_NOT_FOUND,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
+            );
         }
 
         const userRoles: UserRoles[] = user.roles!.map(
@@ -86,6 +97,8 @@ async function getUserById(id: number): Promise<IUserWithRoles> {
             ...user.toJSON(),
             roles: userRoles,
         };
+
+        delete userInformation.passwordHash;
     } catch (error: any) {
         if (error.isTrusted) {
             throw error;
@@ -124,10 +137,9 @@ async function getAllUsers(pagination: {
             order: [["id", "DESC"]],
         });
 
-        users.forEach((user) => {
-            usersList.push({
-                ...user.toJSON(),
-            });
+        usersList = users.map((user) => {
+            const { passwordHash, ...userJson } = user.toJSON() as any;
+            return userJson;
         });
     } catch (error: any) {
         if (error.isTrusted) {
@@ -147,7 +159,8 @@ async function deleteUserById(userId: number): Promise<void> {
         if (user === null) {
             throw new BusinessLogicException(
                 ErrorMessages.USER_NOT_FOUND,
-                DeleteUserErrorCodes.USER_NOT_FOUND
+                DeleteUserErrorCodes.USER_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 
@@ -190,7 +203,8 @@ async function createUser(user: {
         if (userWithSameEmployeeNumber !== null) {
             throw new BusinessLogicException(
                 ErrorMessages.EMPLOYEENUMBER_ALREADY_EXIST,
-                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST
+                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST,
+                HttpStatusCodes.BAD_REQUEST
             );
         }
 
@@ -203,7 +217,8 @@ async function createUser(user: {
         if (userWithSameEmail !== null) {
             throw new BusinessLogicException(
                 ErrorMessages.EMAIL_ALREADY_EXIST,
-                CreateOrUpdateUserErrorCodes.EMAIL_ALREADY_EXIST
+                CreateOrUpdateUserErrorCodes.EMAIL_ALREADY_EXIST,
+                HttpStatusCodes.BAD_REQUEST
             );
         }
 
@@ -291,7 +306,8 @@ async function updateUser(user: {
         if (userWithSameEmployeeNumber !== null) {
             throw new BusinessLogicException(
                 ErrorMessages.EMPLOYEENUMBER_ALREADY_EXIST,
-                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST
+                CreateOrUpdateUserErrorCodes.EMPLOYEE_NUMBER_ALREADY_EXIST,
+                HttpStatusCodes.BAD_REQUEST
             );
         }
 
@@ -300,7 +316,8 @@ async function updateUser(user: {
         if (userInDatabase === null) {
             throw new BusinessLogicException(
                 ErrorMessages.USER_NOT_FOUND,
-                CreateOrUpdateUserErrorCodes.USER_NOT_FOUND
+                CreateOrUpdateUserErrorCodes.USER_NOT_FOUND,
+                HttpStatusCodes.NOT_FOUND
             );
         }
 
@@ -328,7 +345,8 @@ async function updateUser(user: {
             if (witnessCounter.count === 2) {
                 throw new BusinessLogicException(
                     ErrorMessages.TWO_WITNESSES_ALREADY_EXIST,
-                    CreateOrUpdateUserErrorCodes.TWO_WITNESSES_ALREADY_EXIST
+                    CreateOrUpdateUserErrorCodes.TWO_WITNESSES_ALREADY_EXIST,
+                    HttpStatusCodes.BAD_REQUEST
                 );
             }
         }
