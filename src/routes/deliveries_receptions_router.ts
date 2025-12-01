@@ -16,7 +16,7 @@ import validateRequestSchemaMiddleware from "../middlewares/schema_validator";
 import { injectDefaultGetListQueryMiddleware } from "../middlewares/value_injectors";
 import {
     acceptDeliveryReceptionController,
-    createCommentController,
+    createCommentForDeliveryReceptionController,
     createDeliveryReceptionController,
     deleteDeliveryReceptionController,
     getAllDeliveriesReceptionsInProcessController,
@@ -128,11 +128,11 @@ router.post(
     allowRoles([UserRoles.ZONE_MANAGER]),
     checkSchema(createCommentValidationSchema),
     validateRequestSchemaMiddleware,
-    createCommentController
+    createCommentForDeliveryReceptionController
 );
 
 router.get(
-    "/:deliveryReceptionId/comments/:category",
+    "/:deliveryReceptionId/comments",
     checkTokenValidity,
     allowRoles([UserRoles.WORKER]),
     checkSchema(getCommentsByDeliveryReceptionIdValidationSchema),

@@ -251,6 +251,8 @@ async function insertE2EDeleteDeliveryReceptionTestData() {
     return {
         workerMakerUser,
         workerReceiverUser,
+        zoneManagerAndWitnessUser1,
+        categories,
         deliveryReception,
     };
 }
@@ -498,6 +500,51 @@ async function insertE2EUpdateDeliveryReceptionTestData() {
     };
 }
 
+async function insertE2EAcceptDeliveryReceptionTestData() {
+    const {
+        workerReceiverUser,
+        zoneManagerAndWitnessUser1,
+        deliveryReception,
+    } = await insertE2EDeleteDeliveryReceptionTestData();
+    return {
+        workerReceiverUser,
+        zoneManagerAndWitnessUser1,
+        deliveryReception,
+    };
+}
+
+async function insertE2ECreateCommentForDeliveryReceptionTestData() {
+    const { zoneManagerAndWitnessUser1, deliveryReception } =
+        await insertE2EDeleteDeliveryReceptionTestData();
+    return {
+        zoneManagerAndWitnessUser1,
+        deliveryReception,
+    };
+}
+
+async function insertE2EGetAllCommentsByDeliveryReceptionIdAndCategoryTestData() {
+    const {
+        workerMakerUser,
+        zoneManagerAndWitnessUser1,
+        categories,
+        deliveryReception,
+    } = await insertE2EDeleteDeliveryReceptionTestData();
+
+    for (const category of categories) {
+        await db.Comment.create({
+            text: `Comment for ${category.name}`,
+            categoryId: category.id,
+            deliveryReceptionId: deliveryReception.id,
+            userId: zoneManagerAndWitnessUser1.id,
+        });
+    }
+
+    return {
+        workerMakerUser,
+        deliveryReception,
+    };
+}
+
 export {
     insertE2EGetAllDeliveriesReceptionsMadeTestData,
     insertE2EDeleteDeliveryReceptionTestData,
@@ -508,4 +555,7 @@ export {
     insertE2ECreateDeliveryReceptionTestData,
     insertE2EGetDeliveryReceptionByIdTestData,
     insertE2EUpdateDeliveryReceptionTestData,
+    insertE2EAcceptDeliveryReceptionTestData,
+    insertE2ECreateCommentForDeliveryReceptionTestData,
+    insertE2EGetAllCommentsByDeliveryReceptionIdAndCategoryTestData,
 };

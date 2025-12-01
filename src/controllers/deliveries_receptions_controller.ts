@@ -16,10 +16,7 @@ import {
     IDeliveryReceptionWithOpcionalWorkers,
     IDeliveryReceptionWithStatusAndWorkers,
 } from "../types/interfaces/response_bodies";
-import {
-    ICommentsByDeliveryReceptionIdAndCategoryParams,
-    IDeliveryReceptionByIdParams,
-} from "../types/interfaces/request_parameters";
+import { IDeliveryReceptionByIdParams } from "../types/interfaces/request_parameters";
 import {
     getSendingWorkerAndReceivingWorkerByDeliveryReceptionId,
     getSendingWorkerEmail,
@@ -39,6 +36,7 @@ import {
     ICreateCommentBody,
     ICreateOrUpdateDeliveryReceptionBody,
 } from "../types/interfaces/request_bodies";
+import { ICommentByCategoryQuery } from "../types/interfaces/request_queries";
 
 async function getAllDeliveriesReceptionsMadeController(
     req: Request,
@@ -446,7 +444,7 @@ async function acceptDeliveryReceptionController(
     }
 }
 
-async function createCommentController(
+async function createCommentForDeliveryReceptionController(
     req: Request<IDeliveryReceptionByIdParams, {}, ICreateCommentBody, {}>,
     res: Response,
     next: NextFunction
@@ -486,16 +484,17 @@ async function createCommentController(
 }
 
 async function getAllCommentsByDeliveryReceptionIdAndCategoryController(
-    req: Request<ICommentsByDeliveryReceptionIdAndCategoryParams, {}, {}, {}>,
+    req: Request<IDeliveryReceptionByIdParams, {}, {}, ICommentByCategoryQuery>,
     res: Response<ICommentWithCategoryNameAndZoneManagerName[]>,
     next: NextFunction
 ) {
     try {
-        const { deliveryReceptionId, category } = req.params;
+        const { deliveryReceptionId } = req.params;
+        const { categoryName } = req.query;
 
         const comments = await getAllCommentsByDeliveryReceptionIdAndCategory(
             deliveryReceptionId!,
-            category!
+            categoryName!
         );
 
         res.status(HttpStatusCodes.OK).json(comments);
@@ -515,6 +514,6 @@ export {
     getDeliveryReceptonByIdController,
     updateteDeliveryReceptionController,
     acceptDeliveryReceptionController,
-    createCommentController,
+    createCommentForDeliveryReceptionController,
     getAllCommentsByDeliveryReceptionIdAndCategoryController,
 };

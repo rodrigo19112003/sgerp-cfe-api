@@ -442,6 +442,12 @@ const createCommentValidationSchema: Schema = {
         toInt: true,
         notEmpty: { errorMessage: "deliveryReceptionId is required" },
     },
+    categoryName: {
+        in: ["body"],
+        isString: { errorMessage: "categoryName must be a string" },
+        notEmpty: { errorMessage: "categoryName is required" },
+        trim: true,
+    },
     text: {
         in: ["body"],
         isString: { errorMessage: "text must be a string" },
@@ -457,8 +463,8 @@ const getCommentsByDeliveryReceptionIdValidationSchema: Schema = {
         toInt: true,
         notEmpty: { errorMessage: "deliveryReceptionId is required" },
     },
-    category: {
-        in: ["params"],
+    categoryName: {
+        in: ["query"],
         isString: { errorMessage: "category must be a string" },
         notEmpty: { errorMessage: "category is required" },
         trim: true,

@@ -158,7 +158,7 @@ describe("POST /api/deliveries-receptions", () => {
     });
 
     it("Should return an error for server error", async () => {
-        await (db.sequelize as Sequelize).close();
+        await db.sequelize.close();
         const newDeliveryReceptionData = {
             generalData: "General data 6",
             procedureReport: "Procedure report 6",
