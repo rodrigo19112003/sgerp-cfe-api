@@ -348,7 +348,7 @@ async function sendAcceptedDeliveryReceptionEmail(data: {
         subject:
             "Notificación de aceptación de entrega-recepción de puesto en el Sistema SGERP",
         text: `Estimado usuario,
-        Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el Sistema de Gestión de Entrega Recepción de Puestos:
+        Se informa que el usuario ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el Sistema de Gestión de Entrega Recepción de Puestos:
 
         Trabajador que entrega: ${sendingWorker}
         Trabajador que recibe: ${receivingWorker}`,
@@ -356,7 +356,7 @@ async function sendAcceptedDeliveryReceptionEmail(data: {
       <div style="text-align: center; font-family: Arial, sans-serif; color: #333;">
         <img src="cid:logo" alt="SGERP" width="150" style="margin-bottom: 20px;" />
         <p>Estimado(a) usuario(a),</p>
-        <p>Se informa que el/la Jefe de Zona ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong>:</p>
+        <p>Se informa que el usuario ${zoneManagerEmployeeNumberAndName} ha aceptado la entrega-recepción entre los siguientes trabajadores en el <strong>Sistema de Gestión de Entrega Recepción de Puestos</strong>:</p>
         <p style="text-align: left; display: inline-block; margin-top: 10px;">
           • <strong>Trabajador que entrega:</strong> ${sendingWorker}<br>
           • <strong>Trabajador que recibe:</strong> ${receivingWorker}

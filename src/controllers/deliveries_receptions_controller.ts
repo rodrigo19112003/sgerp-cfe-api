@@ -96,7 +96,7 @@ async function deleteDeliveryReceptionController(
             });
         }
 
-        res.sendStatus(HttpStatusCodes.CREATED);
+        res.sendStatus(HttpStatusCodes.NO_CONTENT);
     } catch (error) {
         next(error);
     }
@@ -389,7 +389,7 @@ async function updateteDeliveryReceptionController(
             });
         }
 
-        res.sendStatus(HttpStatusCodes.CREATED);
+        res.sendStatus(HttpStatusCodes.OK);
     } catch (error) {
         next(error);
     }

@@ -216,6 +216,17 @@ const createDeliveryReceptionValidationSchema: Schema = {
                 "programmaticStatusFile must contain valid name, category, and content",
         },
     },
+    employeeNumberReceiver: {
+        in: ["body"],
+        isString: { errorMessage: "employeeNumberReceiver must be a string" },
+        isLength: {
+            options: { min: 5, max: 5 },
+            errorMessage:
+                "employeeNumberReceiver must be exactly 5 characters long",
+        },
+        notEmpty: { errorMessage: "employeeNumberReceiver is required" },
+        trim: true,
+    },
 };
 
 const updateDeliveryReceptionValidationSchema: Schema = {
@@ -317,9 +328,9 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.REPORT &&
                 typeof file.content === "string" &&
-                file.content.length > 0,
+                file.content.length > 0 &&
+                Object.values(EvidenceCategories).includes(file.category),
             errorMessage:
                 "procedureReportFile must contain valid name, category, and content",
         },
@@ -333,7 +344,7 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.FINANCE &&
+                Object.values(EvidenceCategories).includes(file.category) &&
                 typeof file.content === "string" &&
                 file.content.length > 0,
             errorMessage:
@@ -349,7 +360,7 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.HUMAN &&
+                Object.values(EvidenceCategories).includes(file.category) &&
                 typeof file.content === "string" &&
                 file.content.length > 0,
             errorMessage:
@@ -365,7 +376,7 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.MATERIAL &&
+                Object.values(EvidenceCategories).includes(file.category) &&
                 typeof file.content === "string" &&
                 file.content.length > 0,
             errorMessage:
@@ -381,7 +392,7 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.BUDGET &&
+                Object.values(EvidenceCategories).includes(file.category) &&
                 typeof file.content === "string" &&
                 file.content.length > 0,
             errorMessage:
@@ -397,23 +408,12 @@ const updateDeliveryReceptionValidationSchema: Schema = {
             options: (file: any) =>
                 file &&
                 typeof file.name === "string" &&
-                file.category === EvidenceCategories.PROGRAMMATIC &&
+                Object.values(EvidenceCategories).includes(file.category) &&
                 typeof file.content === "string" &&
                 file.content.length > 0,
             errorMessage:
                 "programmaticStatusFile must contain valid name, category, and content",
         },
-    },
-    employeeNumberReceiver: {
-        in: ["body"],
-        isString: { errorMessage: "employeeNumberReceiver must be a string" },
-        isLength: {
-            options: { min: 5, max: 5 },
-            errorMessage:
-                "employeeNumberReceiver must be exactly 5 characters long",
-        },
-        notEmpty: { errorMessage: "employeeNumberReceiver is required" },
-        trim: true,
     },
 };
 

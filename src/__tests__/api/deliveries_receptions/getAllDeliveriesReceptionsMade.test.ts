@@ -4,64 +4,55 @@ import { Express } from "express";
 import { HttpStatusCodes } from "../../../types/enums/http";
 import db from "../../../models";
 import { Sequelize } from "sequelize";
-import { insertE2EGetAllUsersTestData } from "../../../test_data/e2e/users_test_data";
+import { insertE2EGetAllDeliveriesReceptionsMadeTestData } from "../../../test_data/e2e/deliveries_receptions_test_data";
 
-describe("GET /api/users", () => {
+describe("GET /api/deliveries-receptions/made", () => {
     let app: Express;
-    let adminToken: string;
+    let workerToken: string;
+    let deliveryReceptionId: number;
 
     beforeAll(async () => {
         app = createApp();
         await db.sequelize.sync({ force: true });
-        const adminUser = await insertE2EGetAllUsersTestData();
+        const { workerMakerUser, deliveryReception } =
+            await insertE2EGetAllDeliveriesReceptionsMadeTestData();
+        deliveryReceptionId = deliveryReception.id;
 
         const loginResponse = await request(app).post("/api/sessions").send({
-            employeeNumber: adminUser.employeeNumber,
+            employeeNumber: workerMakerUser.employeeNumber,
             password: "rodrigo10",
         });
-        const adminUserBody = loginResponse.body;
-        adminToken = adminUserBody.token;
+        const workerUserBody = loginResponse.body;
+        workerToken = workerUserBody.token;
     });
 
-    it("Should return all users for an administrator", async () => {
+    it("Should return all made deliveries receptions for a worker", async () => {
         const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${adminToken}`);
+            .get("/api/deliveries-receptions/made")
+            .set("Authorization", `Bearer ${workerToken}`);
 
         expect(response.status).toBe(HttpStatusCodes.OK);
         expect(Array.isArray(response.body)).toBe(true);
     });
-
     it("Should return an error for missing token", async () => {
-        const response = await request(app).get("/api/users");
+        const response = await request(app).get(
+            "/api/deliveries-receptions/made"
+        );
         expect(response.status).toBe(HttpStatusCodes.UNAUTHORIZED);
     });
 
     it("Should return an error for invalid token", async () => {
         const response = await request(app)
-            .get("/api/users")
+            .get("/api/deliveries-receptions/made")
             .set("Authorization", `Bearer invalidtoken`);
         expect(response.status).toBe(HttpStatusCodes.UNAUTHORIZED);
-    });
-
-    it("Should return an error for non-administrator user", async () => {
-        const loginResponse = await request(app).post("/api/sessions").send({
-            employeeNumber: "100AA",
-            password: "rodrigo10",
-        });
-        const normalUser = loginResponse.body;
-        const normalUserToken = normalUser.token;
-        const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${normalUserToken}`);
-        expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
     });
 
     it("Should return an error for server error", async () => {
         await db.sequelize.close();
         const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${adminToken}`);
+            .get("/api/deliveries-receptions/made")
+            .set("Authorization", `Bearer ${workerToken}`);
         expect(response.status).toBe(HttpStatusCodes.INTERNAL_SERVER_ERROR);
     });
 

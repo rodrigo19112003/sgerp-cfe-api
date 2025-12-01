@@ -71,6 +71,14 @@ describe("GET /api/users/:employeeNumber", () => {
         expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
     });
 
+    it("Should return an error for server error", async () => {
+        await db.sequelize.close();
+        const response = await request(app)
+            .get(`/api/users/${workerEmployeeNumber}`)
+            .set("Authorization", `Bearer ${adminToken}`);
+        expect(response.status).toBe(HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    });
+
     afterAll(async () => {
         db.sequelize = new Sequelize("database", "username", "password", {
             host: "localhost",

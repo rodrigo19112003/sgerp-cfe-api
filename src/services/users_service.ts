@@ -556,6 +556,16 @@ async function getZoneManagersAndReceivingWorkerEmailsByDeliveryReceptionId(
     userId?: number
 ): Promise<string[]> {
     try {
+        const deliveryReception = await db.DeliveryReception.findByPk(
+            deliveryReceptionId
+        );
+        if (deliveryReception === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
         const deliveriesReceptions = await db.DeliveryReceptionReceived.findAll(
             {
                 where: { deliveryReceptionId },
@@ -624,6 +634,14 @@ async function getSendingWorkerAndReceivingWorkerByDeliveryReceptionId(
                 include: [{ model: db.User, as: "user" }],
             }
         );
+
+        if (deliveryReception === null) {
+            throw new BusinessLogicException(
+                ErrorMessages.DELIVERY_RECEPTION_NOT_FOUND,
+                undefined,
+                HttpStatusCodes.NOT_FOUND
+            );
+        }
 
         const deliveryReceptionReceived =
             await db.DeliveryReceptionReceived.findOne({

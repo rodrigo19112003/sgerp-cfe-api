@@ -4,64 +4,54 @@ import { Express } from "express";
 import { HttpStatusCodes } from "../../../types/enums/http";
 import db from "../../../models";
 import { Sequelize } from "sequelize";
-import { insertE2EGetAllUsersTestData } from "../../../test_data/e2e/users_test_data";
+import { insertE2EGetAllDeliveriesReceptionsPendingTestData } from "../../../test_data/e2e/deliveries_receptions_test_data";
 
-describe("GET /api/users", () => {
+describe("GET /api/deliveries-receptions/pending", () => {
     let app: Express;
-    let adminToken: string;
+    let zoneManagerToken: string;
+    let deliveryReceptionId: number;
 
     beforeAll(async () => {
         app = createApp();
         await db.sequelize.sync({ force: true });
-        const adminUser = await insertE2EGetAllUsersTestData();
-
+        const { zoneManagerAndWitnessUser1, deliveryReception } =
+            await insertE2EGetAllDeliveriesReceptionsPendingTestData();
+        deliveryReceptionId = deliveryReception.id;
         const loginResponse = await request(app).post("/api/sessions").send({
-            employeeNumber: adminUser.employeeNumber,
+            employeeNumber: zoneManagerAndWitnessUser1.employeeNumber,
             password: "rodrigo10",
         });
-        const adminUserBody = loginResponse.body;
-        adminToken = adminUserBody.token;
+        const zoneManagerUserBody = loginResponse.body;
+        zoneManagerToken = zoneManagerUserBody.token;
     });
 
-    it("Should return all users for an administrator", async () => {
+    it("Should return all pending deliveries receptions for a zone manager", async () => {
         const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${adminToken}`);
-
+            .get("/api/deliveries-receptions/pending")
+            .set("Authorization", `Bearer ${zoneManagerToken}`);
         expect(response.status).toBe(HttpStatusCodes.OK);
         expect(Array.isArray(response.body)).toBe(true);
     });
 
     it("Should return an error for missing token", async () => {
-        const response = await request(app).get("/api/users");
+        const response = await request(app).get(
+            "/api/deliveries-receptions/pending"
+        );
         expect(response.status).toBe(HttpStatusCodes.UNAUTHORIZED);
     });
 
     it("Should return an error for invalid token", async () => {
         const response = await request(app)
-            .get("/api/users")
+            .get("/api/deliveries-receptions/pending")
             .set("Authorization", `Bearer invalidtoken`);
         expect(response.status).toBe(HttpStatusCodes.UNAUTHORIZED);
-    });
-
-    it("Should return an error for non-administrator user", async () => {
-        const loginResponse = await request(app).post("/api/sessions").send({
-            employeeNumber: "100AA",
-            password: "rodrigo10",
-        });
-        const normalUser = loginResponse.body;
-        const normalUserToken = normalUser.token;
-        const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${normalUserToken}`);
-        expect(response.status).toBe(HttpStatusCodes.FORBIDDEN);
     });
 
     it("Should return an error for server error", async () => {
         await db.sequelize.close();
         const response = await request(app)
-            .get("/api/users")
-            .set("Authorization", `Bearer ${adminToken}`);
+            .get("/api/deliveries-receptions/pending")
+            .set("Authorization", `Bearer ${zoneManagerToken}`);
         expect(response.status).toBe(HttpStatusCodes.INTERNAL_SERVER_ERROR);
     });
 
